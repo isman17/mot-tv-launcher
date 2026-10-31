@@ -164,10 +164,25 @@
             android:layout_weight="1">
 
             <LinearLayout
-                android:id="@+id/groupsContainer"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="vertical" />
+                android:orientation="vertical">
+
+                <!-- Skeleton while fixtures load (phase 4.3): built in code
+                     to mirror the real league groups + match rows. -->
+                <LinearLayout
+                    android:id="@+id/bolaSkeleton"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:visibility="gone" />
+
+                <LinearLayout
+                    android:id="@+id/groupsContainer"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical" />
+            </LinearLayout>
         </ScrollView>
 
         <TextView

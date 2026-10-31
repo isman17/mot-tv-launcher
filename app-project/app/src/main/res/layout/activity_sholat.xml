@@ -121,6 +121,7 @@
 
                     <!-- Next prayer card -->
                     <LinearLayout
+                        android:id="@+id/nextPrayerCard"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="16dp"
@@ -170,6 +171,87 @@
                             android:textStyle="bold" />
                     </LinearLayout>
 
+                    <!-- Skeleton while the schedule loads (phase 4.3):
+                         a next-prayer card block + 4 x 2 time blocks,
+                         mirroring the real layout above. -->
+                    <LinearLayout
+                        android:id="@+id/sholatSkeleton"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:visibility="gone">
+
+                        <com.mottv.launcher.ShimmerBar
+                            android:layout_width="match_parent"
+                            android:layout_height="84dp"
+                            android:layout_marginTop="16dp" />
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="14dp"
+                            android:orientation="horizontal">
+
+                            <com.mottv.launcher.ShimmerBar
+                                android:layout_width="0dp"
+                                android:layout_height="76dp"
+                                android:layout_marginEnd="5dp"
+                                android:layout_weight="1" />
+
+                            <com.mottv.launcher.ShimmerBar
+                                android:layout_width="0dp"
+                                android:layout_height="76dp"
+                                android:layout_marginStart="5dp"
+                                android:layout_marginEnd="5dp"
+                                android:layout_weight="1" />
+
+                            <com.mottv.launcher.ShimmerBar
+                                android:layout_width="0dp"
+                                android:layout_height="76dp"
+                                android:layout_marginStart="5dp"
+                                android:layout_marginEnd="5dp"
+                                android:layout_weight="1" />
+
+                            <com.mottv.launcher.ShimmerBar
+                                android:layout_width="0dp"
+                                android:layout_height="76dp"
+                                android:layout_marginStart="5dp"
+                                android:layout_weight="1" />
+                        </LinearLayout>
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="10dp"
+                            android:orientation="horizontal">
+
+                            <com.mottv.launcher.ShimmerBar
+                                android:layout_width="0dp"
+                                android:layout_height="76dp"
+                                android:layout_marginEnd="5dp"
+                                android:layout_weight="1" />
+
+                            <com.mottv.launcher.ShimmerBar
+                                android:layout_width="0dp"
+                                android:layout_height="76dp"
+                                android:layout_marginStart="5dp"
+                                android:layout_marginEnd="5dp"
+                                android:layout_weight="1" />
+
+                            <com.mottv.launcher.ShimmerBar
+                                android:layout_width="0dp"
+                                android:layout_height="76dp"
+                                android:layout_marginStart="5dp"
+                                android:layout_marginEnd="5dp"
+                                android:layout_weight="1" />
+
+                            <com.mottv.launcher.ShimmerBar
+                                android:layout_width="0dp"
+                                android:layout_height="76dp"
+                                android:layout_marginStart="5dp"
+                                android:layout_weight="1" />
+                        </LinearLayout>
+                    </LinearLayout>
                     <!-- 8 prayer times, 4 x 2 grid (built in code) -->
                     <GridLayout
                         android:id="@+id/timesGrid"
@@ -178,6 +260,7 @@
                         android:layout_marginTop="14dp"
                         android:columnCount="4"
                         android:rowCount="2" />
+
                 </LinearLayout>
             </ScrollView>
 

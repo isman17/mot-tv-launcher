@@ -54,6 +54,8 @@ class SholatActivity : AppCompatActivity() {
     private lateinit var nextPrayer: TextView
     private lateinit var countdown: TextView
     private lateinit var timesGrid: GridLayout
+    private lateinit var nextPrayerCard: View
+    private lateinit var sholatSkeleton: View
     private lateinit var scheduleScroll: View
     private lateinit var pickerPanel: View
     private lateinit var pickerStatus: TextView
@@ -84,6 +86,14 @@ class SholatActivity : AppCompatActivity() {
         nextPrayer = findViewById(R.id.nextPrayer)
         countdown = findViewById(R.id.countdown)
         timesGrid = findViewById(R.id.timesGrid)
+        nextPrayerCard = findViewById(R.id.nextPrayerCard)
+        sholatSkeleton = findViewById(R.id.sholatSkeleton)
+        // Skeleton corners match the real cards/tiles (12dp).
+        fun roundBars(v: View) {
+            if (v is ShimmerBar) v.cornerRadiusDp = 12f
+            if (v is ViewGroup) for (i in 0 until v.childCount) roundBars(v.getChildAt(i))
+        }
+        roundBars(sholatSkeleton)
         scheduleScroll = findViewById(R.id.scheduleScroll)
         pickerPanel = findViewById(R.id.pickerPanel)
         pickerStatus = findViewById(R.id.pickerStatus)
@@ -125,8 +135,25 @@ class SholatActivity : AppCompatActivity() {
             }
         })
 
+        showSkeleton()
         loadCities()
         changeCityBtn.requestFocus()
+    }
+
+    // ---------- Loading skeleton (phase 4.3) ----------
+
+    /** While the schedule is in flight, the real card + grid step aside
+     *  and the shimmer blocks take their exact place. */
+    private fun showSkeleton() {
+        sholatSkeleton.visibility = View.VISIBLE
+        nextPrayerCard.visibility = View.GONE
+        timesGrid.visibility = View.GONE
+    }
+
+    private fun hideSkeleton() {
+        sholatSkeleton.visibility = View.GONE
+        nextPrayerCard.visibility = View.VISIBLE
+        timesGrid.visibility = View.VISIBLE
     }
 
     override fun onResume() {
@@ -181,11 +208,13 @@ class SholatActivity : AppCompatActivity() {
                         ?: cities.firstOrNull { it.name.startsWith("KOTA BANDUNG", ignoreCase = true) }
                         ?: cities.firstOrNull()
                     if (initial != null) selectCity(initial, keepPickerAsIs = true) else {
+                        hideSkeleton()
                         statusText.text = "Daftar kota kosong dari server."
                     }
                 }
             } catch (e: Exception) {
                 handler.post {
+                    hideSkeleton()
                     statusText.text = "Gagal memuat daftar kota — cek koneksi internet TV. (${e.message})"
                     pickerStatus.text = "Gagal memuat daftar kota (${e.message})"
                 }
@@ -202,6 +231,7 @@ class SholatActivity : AppCompatActivity() {
         if (pickerOpen && !keepPickerAsIs) closePicker()
         cityName.text = titleCase(city.name)
         statusText.text = "Memuat jadwal…"
+        showSkeleton()
         val cal = Calendar.getInstance()
         val yyyy = cal.get(Calendar.YEAR).toString()
         val mm = String.format(Locale.US, "%02d", cal.get(Calendar.MONTH) + 1)
@@ -233,6 +263,7 @@ class SholatActivity : AppCompatActivity() {
                 }
             } catch (e: Exception) {
                 handler.post {
+                    hideSkeleton()
                     statusText.text = "Gagal memuat jadwal — cek koneksi internet TV. (${e.message})"
                 }
             }
@@ -243,6 +274,7 @@ class SholatActivity : AppCompatActivity() {
 
     /** 4×2 tile grid — sized to fit 768p fully, next prayer highlighted gold. */
     private fun renderTimes() {
+        hideSkeleton()
         timesGrid.removeAllViews()
         val nextLabel = computeNext()?.first?.removeSuffix(" (besok)")
         val now = Calendar.getInstance()

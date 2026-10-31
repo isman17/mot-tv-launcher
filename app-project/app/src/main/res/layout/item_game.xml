@@ -8,6 +8,12 @@
     android:focusable="true"
     android:clickable="true">
 
+    <!-- Shimmer placeholder behind the artwork (phase 4.3) -->
+    <com.mottv.launcher.ShimmerBar
+        android:id="@+id/gameShimmer"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
     <!-- Phase 4: no-crop artwork (blur backdrop + FIT_CENTER) -->
     <com.mottv.launcher.FitArtView
         android:id="@+id/gameArt"

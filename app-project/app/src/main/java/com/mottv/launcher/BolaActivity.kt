@@ -116,6 +116,7 @@ class BolaActivity : AppCompatActivity() {
     private lateinit var dateLabel: TextView
     private lateinit var emptyText: TextView
     private lateinit var groupsContainer: LinearLayout
+    private lateinit var bolaSkeleton: LinearLayout
     private lateinit var chipsAdapter: ChipsAdapter
     private lateinit var datePills: Map<String, TextView>
 
@@ -151,6 +152,8 @@ class BolaActivity : AppCompatActivity() {
         dateLabel = findViewById(R.id.dateLabel)
         emptyText = findViewById(R.id.bolaEmpty)
         groupsContainer = findViewById(R.id.groupsContainer)
+        bolaSkeleton = findViewById(R.id.bolaSkeleton)
+        buildSkeleton()
 
         stylePill(findViewById(R.id.backBtn)) { finish() }
         datePills = mapOf(
@@ -254,6 +257,8 @@ class BolaActivity : AppCompatActivity() {
 
     /** Short, user-reportable description of a failure (HTTP code included). */
     private fun shortError(e: Exception): String = when (e) {
+        is SslValidationException ->
+            "sertifikat situs tidak bisa diverifikasi — cek tanggal & jam TV (atur otomatis)"
         is HttpException -> "HTTP ${e.code}"
         is IOException -> "jaringan (${e.message?.take(60) ?: "timeout"})"
         else -> "${e.javaClass.simpleName} (${e.message?.take(60) ?: "?"})"
@@ -441,11 +446,83 @@ class BolaActivity : AppCompatActivity() {
         }
     }
 
+    // ---------- Loading skeleton (phase 4.3) ----------
+
+    /** Builds a shimmer mirror of the real content: 2 league groups, each
+     *  a header (circle + name bar) and 3 match rows (circle, team bar,
+     *  kickoff bar, team bar, circle). Non-focusable by construction. */
+    private fun buildSkeleton() {
+        bolaSkeleton.removeAllViews()
+        fun bar(w: Int, h: Int, radius: Float, weight: Float = 0f): ShimmerBar {
+            return ShimmerBar(this).apply {
+                cornerRadiusDp = radius
+                layoutParams = LinearLayout.LayoutParams(
+                    if (weight > 0f) 0 else dp(w), dp(h), weight
+                )
+            }
+        }
+        fun circle(size: Int): ShimmerBar = bar(size, size, 999f).apply {
+            (layoutParams as LinearLayout.LayoutParams).gravity = Gravity.CENTER_VERTICAL
+        }
+        repeat(2) {
+            val header = LinearLayout(this).apply {
+                orientation = LinearLayout.HORIZONTAL
+                gravity = Gravity.CENTER_VERTICAL
+                layoutParams = LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT
+                ).apply { topMargin = dp(14); bottomMargin = dp(6) }
+            }
+            header.addView(circle(34))
+            header.addView(bar(170, 16, 8f).apply {
+                (layoutParams as LinearLayout.LayoutParams).marginStart = dp(10)
+            })
+            header.addView(bar(54, 14, 7f).apply {
+                (layoutParams as LinearLayout.LayoutParams).marginStart = dp(10)
+            })
+            bolaSkeleton.addView(header)
+            repeat(3) {
+                val row = LinearLayout(this).apply {
+                    orientation = LinearLayout.HORIZONTAL
+                    gravity = Gravity.CENTER_VERTICAL
+                    layoutParams = LinearLayout.LayoutParams(
+                        LinearLayout.LayoutParams.MATCH_PARENT,
+                        LinearLayout.LayoutParams.WRAP_CONTENT
+                    ).apply { bottomMargin = dp(7) }
+                    setPadding(dp(12), dp(9), dp(12), dp(9))
+                }
+                row.addView(circle(34))
+                row.addView(bar(0, 14, 7f, weight = 1f).apply {
+                    (layoutParams as LinearLayout.LayoutParams).marginStart = dp(10)
+                })
+                row.addView(bar(56, 16, 8f).apply {
+                    (layoutParams as LinearLayout.LayoutParams).apply {
+                        marginStart = dp(8); marginEnd = dp(8)
+                    }
+                })
+                row.addView(bar(0, 14, 7f, weight = 1f))
+                row.addView(circle(34).apply {
+                    (layoutParams as LinearLayout.LayoutParams).marginStart = dp(10)
+                })
+                bolaSkeleton.addView(row)
+            }
+        }
+    }
+
+    private fun showSkeleton() {
+        bolaSkeleton.visibility = View.VISIBLE
+    }
+
+    private fun hideSkeleton() {
+        bolaSkeleton.visibility = View.GONE
+    }
+
     private fun loadDate(date: LocalDate) {
         val seq = ++loadSeq
         statusText.text = "Memuat jadwal…"
         groupsContainer.removeAllViews()
         emptyText.visibility = View.GONE
+        showSkeleton()
         val key = date.format(DateTimeFormatter.ISO_LOCAL_DATE)
         loadIo.execute {
             var failures = 0
@@ -478,6 +555,7 @@ class BolaActivity : AppCompatActivity() {
             val err = lastErrorShort
             handler.post {
                 if (seq != loadSeq) return@post // a newer date was picked meanwhile
+                hideSkeleton()
                 if (badgeUpdated) chipsAdapter.notifyDataSetChanged()
                 when {
                     failures == LEAGUES.size -> {
@@ -691,6 +769,7 @@ class BolaActivity : AppCompatActivity() {
     // ---------------- Rendering ----------------
 
     private fun render(days: List<LeagueDay>) {
+        hideSkeleton()
         groupsContainer.removeAllViews()
         val filtered = if (selectedLeagueId == null) days
         else days.filter { it.league.id == selectedLeagueId }

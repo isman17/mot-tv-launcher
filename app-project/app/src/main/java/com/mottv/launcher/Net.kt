@@ -5,9 +5,24 @@ import android.graphics.BitmapFactory
 import org.json.JSONObject
 import java.net.HttpURLConnection
 import java.net.URL
+import java.security.cert.CertPathValidatorException
+import java.security.cert.CertificateException
+import javax.net.ssl.SSLHandshakeException
 
 /** HTTP failure carrying the status code so callers can show it diagnostically. */
 class HttpException(val code: Int) : IllegalStateException("HTTP $code")
+
+/**
+ * TLS certificate-chain failure ("Chain validation failed" on the TV),
+ * translated to plain language. Callers that print `e.message` (Hasil
+ * Pencarian, Jadwal Sholat, …) automatically show this friendly text
+ * instead of the raw exception. Phase 4.3.
+ */
+class SslValidationException : IllegalStateException(
+    "Sertifikat situs tidak bisa diverifikasi — rantai sertifikatnya tidak " +
+        "valid/tidak lengkap, atau tanggal & jam TV tidak akurat. " +
+        "Cek Pengaturan TV → Tanggal & waktu → otomatis."
+)
 
 /** Minimal HTTP helper (no extra dependency). Throws on any failure — callers show honest errors. */
 object Net {
@@ -34,7 +49,29 @@ object Net {
         return conn
     }
 
-    fun getJson(url: String, userAgent: String = BROWSER_UA): JSONObject {
+    /** True when the failure chain contains a TLS certificate problem. */
+    private fun isSslFailure(e: Throwable): Boolean {
+        var t: Throwable? = e
+        while (t != null) {
+            if (t is SSLHandshakeException || t is CertPathValidatorException ||
+                t is CertificateException
+            ) return true
+            t = t.cause
+        }
+        return false
+    }
+
+    /** Runs [block], rethrowing certificate failures as [SslValidationException]. */
+    private fun <T> guardSsl(block: () -> T): T {
+        try {
+            return block()
+        } catch (e: Exception) {
+            if (isSslFailure(e)) throw SslValidationException()
+            throw e
+        }
+    }
+
+    fun getJson(url: String, userAgent: String = BROWSER_UA): JSONObject = guardSsl {
         val conn = open(url, userAgent, "application/json")
         try {
             val code = conn.responseCode
@@ -42,14 +79,14 @@ object Net {
             val body = stream?.bufferedReader()?.use { it.readText() }
             if (code !in 200..299) throw HttpException(code)
             if (body == null) throw IllegalStateException("Respons kosong dari server")
-            return JSONObject(body)
+            JSONObject(body)
         } finally {
             conn.disconnect()
         }
     }
 
     /** Raw text GET (HTML pages). */
-    fun getText(url: String, userAgent: String = BROWSER_UA): String {
+    fun getText(url: String, userAgent: String = BROWSER_UA): String = guardSsl {
         val conn = open(url, userAgent, "text/html,application/xhtml+xml")
         try {
             val code = conn.responseCode
@@ -57,7 +94,7 @@ object Net {
             val body = stream?.bufferedReader()?.use { it.readText() }
                 ?: throw IllegalStateException("HTTP $code tanpa body")
             if (code !in 200..299) throw HttpException(code)
-            return body
+            body
         } finally {
             conn.disconnect()
         }

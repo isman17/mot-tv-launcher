@@ -46,6 +46,7 @@ class ResultsActivity : AppCompatActivity() {
 
     private lateinit var statusText: TextView
     private lateinit var countPill: TextView
+    private lateinit var resultsSkeleton: View
     private lateinit var adapter: ResultsAdapter
 
     private var query: String = ""
@@ -62,6 +63,7 @@ class ResultsActivity : AppCompatActivity() {
         findViewById<TextView>(R.id.resultTitle).text = "“$query”"
         statusText = findViewById(R.id.statusText)
         countPill = findViewById(R.id.countPill)
+        resultsSkeleton = findViewById(R.id.resultsSkeleton)
 
         findViewById<TextView>(R.id.backBtn).apply {
             setOnFocusChangeListener { v, hasFocus ->
@@ -139,6 +141,7 @@ class ResultsActivity : AppCompatActivity() {
         statusText.text = "Mencari…"
         countPill.text = ""
         adapter.submit(emptyList())
+        resultsSkeleton.visibility = View.VISIBLE
         val q = effectiveQuery()
         io.execute {
             try {
@@ -147,6 +150,7 @@ class ResultsActivity : AppCompatActivity() {
                 val htmlText = Net.getText(url)
                 if (htmlText.contains("anomaly") && !htmlText.contains("result__a")) {
                     handler.post {
+                        resultsSkeleton.visibility = View.GONE
                         statusText.text =
                             "Mesin pencari menampilkan halaman pemeriksaan robot untuk jaringan ini. " +
                                 "Coba lagi beberapa saat lagi."
@@ -155,6 +159,7 @@ class ResultsActivity : AppCompatActivity() {
                 }
                 val results = parseResults(htmlText)
                 handler.post {
+                    resultsSkeleton.visibility = View.GONE
                     if (results.isEmpty()) {
                         statusText.text = "Tidak ada hasil untuk “$query”. Coba kata lain."
                         countPill.text = "0 hasil"
@@ -172,6 +177,7 @@ class ResultsActivity : AppCompatActivity() {
                 }
             } catch (e: Exception) {
                 handler.post {
+                    resultsSkeleton.visibility = View.GONE
                     statusText.text =
                         "Gagal memuat hasil — cek koneksi internet TV. (${e.message})"
                 }

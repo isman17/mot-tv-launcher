@@ -331,3 +331,59 @@ Di `app/build.gradle.kts`: signingConfig "mot" sekarang **hanya dibuat & diterap
 1. Semua perubahan compile-verified + isi APK terverifikasi dari VM; tampilan ikon/banner/logo Tentang dan keseragaman thumbnail di TV menunggu retest user seperti fase sebelumnya.
 2. `ic_launcher_round.png` memakai art persegi yang sama (sesuai brief "same art is fine") — bukan versi mask lingkaran khusus; launcher yang meminta roundIcon akan men-mask-nya sendiri.
 3. Fallback signing untuk clone SUDAH diuji terpisah: salinan bersih app-project dibangun di /tmp tanpa folder keystore di sebelahnya — BUILD SUCCESSFUL (34/34 task dari nol) dan APK-nya tertanda tangan sertifikat "Android Debug" hasil generate otomatis (5eb1ba82…), bukan kunci mot — fallback bekerja persis seperti dirancang, tanpa menyentuh keystore asli proyek.
+
+---
+
+# BUILD REPORT — Fase 4.3 (SSL browser jinak, blur nge-blend, skeleton shimmer) — v0.4.3
+
+Tanggal: 2026-11-01 · Status akhir: **BUILD SUCCESSFUL — APK 0.4.3 jadi, badging + sertifikat + quotes terverifikasi.**
+Konteks: tiga catatan user dari uji TV atas 0.4.2: (1) browser bawaan mati dengan error **"Chain validation failed"**, (2) thumbnail & background blur **"masih kurang ngeblend"**, (3) loading state minta **skeleton placeholder shimmer**. (Logo 0.4.2 dinyatakan user "ok sih" — tidak disentuh.) Status di bawah tetap jujur: semua *compile-verified dari VM*; konfirmasi runtime di TV menunggu instal 0.4.3 oleh user (tidak ada percobaan ADB dari VM). **Tidak ada commit/push git di fase ini** — urusan GitHub dipegang parent.
+
+## Hasil akhir
+
+| Item | Nilai |
+|---|---|
+| APK (deliverable) | `~/workspace/smart-tv-launcher/MotTvLauncher-0.4.3-debug.apk` |
+| Ukuran | 9.541.237 byte (±9,5 MB — praktis sama dengan 0.4.2; **tidak ada dependensi baru**) |
+| applicationId | `com.mottv.launcher` |
+| versionName / versionCode | **0.4.3 / 7** (dari `aapt dump badging`) |
+| minSdk / targetSdk / compileSdk | 26 / 34 / 34 (badging) |
+| Sertifikat penanda tangan | SHA-256 **dda6fa9827737d4b447a3caa470fbec0838d534679f4579a0195ae116fe096d4** — identik keystore permanen → **0.4.3 bisa diinstal menimpa 0.4.2 TANPA uninstall** |
+| Sanity | `assets/quotes.json` md5 identik dengan `quotes/quotes.json` (**1600905b7551b553a97dd09fc0020849**) — pool tidak berubah |
+
+Perintah build hijau sekali jalan: pola offline persis fase 1–4.2 (`assembleDebug --offline --no-daemon`, 15 task dieksekusi). Satu-satunya warning: `FLAG_IS_GAME` deprecated di GamesActivity — sudah ada sejak fase 1, tidak berpengaruh.
+
+## Item 1 — Browser: error SSL "Chain validation failed" jadi jinak
+
+- **WebView** (`BrowserActivity`): WebViewClient sekarang menimpa `onReceivedSslError`. **Tidak pernah auto-proceed diam-diam**: load dibatalkan (`handler.cancel()`) dan panel error in-app tampil (overlay layar penuh + kartu, semua tombol fokusable untuk remote):
+  - Judul: **"⚠ Sertifikat situs tidak bisa diverifikasi"**
+  - Isi: menyebut **host**-nya + penjelasan bahasa polos — rantai sertifikat situs tidak valid/tidak lengkap, ATAU tanggal & jam TV tidak akurat; halaman diblokir demi keamanan.
+  - Baris petunjuk kecil: *"Kalau banyak situs gagal: cek Pengaturan TV → Tanggal & waktu → otomatis."* (petunjuk yang sama juga ditambahkan ke halaman awal/empty state browser).
+  - Tombol: **[Coba Lagi]** (muat ulang URL yang gagal), **[Tetap Buka (Tidak Aman)]** (host dimasukkan ke set persetujuan **sesi ini saja** — `Collections.synchronizedSet` in-memory di companion, tidak pernah ditulis ke disk; load host itu berikutnya dalam sesi yang sama tidak ditanya lagi), **[Kembali]** (riwayat mundur, atau keluar kalau tidak ada riwayat). Back saat panel tampil = perilaku tombol Kembali.
+- **Request non-WebView** (`Net`): `getJson`/`getText` sekarang membungkus kegagalan yang rantai penyebabnya mengandung `SSLHandshakeException`/`CertPathValidatorException`/`CertificateException` menjadi **`SslValidationException`** yang pesannya sudah bahasa polos + petunjuk cek tanggal & jam TV. Semua pemanggil yang menampilkan `e.message` (Hasil Pencarian, Jadwal Sholat) otomatis menampilkannya; `BolaActivity.shortError` dapat cabang khusus ("sertifikat situs tidak bisa diverifikasi — cek tanggal & jam TV (atur otomatis)"). `getBitmap` tidak diubah (kegagalan gambar memang selalu jatuh ke placeholder jujur).
+- Kejujuran penyebab: error ini di TV hampir selalu salah satu dari (a) rantai sertifikat situs memang tidak lengkap, (b) jam/tanggal TV meleset sehingga sertifikat terlihat belum berlaku/kedaluwarsa. App tidak bisa membedakan keduanya dari luar — karena itu panel menyebut dua-duanya dan menawarkan pilihan sadar ke user, bukan bypass senyap.
+
+## Item 2 — Blur nge-blend (FitArtView + TileArt)
+
+- **Blur lebih berat** (`TileArt.blurredBackdrop`): downscale **÷24** (dulu ÷16) lalu **dua** pass upscale berfilter dengan satu downscale tambahan di tengahnya — jatuhnya halus seperti gaussian, bukan satu langkah kasar. Penggelapan diseragamkan (alpha 110). Tetap di-cache per bitmap sumber; bitmap sumber tidak pernah di-recycle.
+- **Overscan backdrop**: ImageView backdrop di-scale **×1,15** sehingga tepi luar gambar blur (dan ringing paling terang/gelapnya) berada di luar frame yang ter-clip — tidak ada lagi tepi persegi yang terlihat di dalam tile.
+- **Veil gradasi**: lapisan baru di antara backdrop dan artwork — gradasi radial warna keluarga tile (#26282E, ujung gradasi background app), transparan di tengah dan menggelap ke tepi/bawah, sehingga backdrop "meleleh" ke permukaan tile.
+- **Bayangan lembut di bawah artwork depan**: tiga lapisan rounded-rect hitam bertumpuk (alpha 10/18/30, ekspansi 9/5,5/2,5dp, jatuh 1,5dp) digambar di `drawChild` tepat sebelum layer depan dirender — artwork terasa melayang, bukan berakhir di border keras. Aturan lama tetap absolut: inset 10dp, radius depan 10dp, foreground **tidak pernah di-crop**. Berlaku di semua pemakai FitArtView: tile Beranda, hero, Games, Semua App.
+
+## Item 3 — Skeleton shimmer saat loading
+
+Komponen baru `Shimmer.kt`:
+- **`Shimmer`** (object): SATU `ValueAnimator` bersama untuk seluruh app (1200 ms, linear, loop), berjalan hanya selama ada `ShimmerBar` yang ter-attach; semua bar membaca `phase` yang sama sehingga sapuan sinkron; animator berhenti sendiri saat bar terakhir detach — murah untuk TV.
+- **`ShimmerBar`**: satu bentuk placeholder — rounded-rect warna dasar **#3A3E47** + pita cahaya menyapu (puncak alpha ≈0,15), radius bisa diatur (999 = lingkaran/pill). Tidak focusable/clickable — skeleton tidak pernah menjebak D-pad.
+
+Pemakaian per layar:
+- **Jadwal Bola**: skeleton dibangun di kode meniru konten asli — 2 grup liga (header: lingkaran + bar nama + bar tag) × 3 baris match (lingkaran, bar tim, bar jam, bar tim, lingkaran). Tampil selama `loadDate`, hilang saat hasil/cache/error dirender.
+- **Jadwal Sholat**: blok shimmer di layout — satu kartu "sholat berikutnya" (84dp) + grid **4×2** blok waktu 76dp, radius 12dp sama seperti tile asli. Saat tampil, kartu + grid asli disembunyikan (skeleton menggantikan posisinya persis); hilang saat jadwal dirender atau error.
+- **Hasil Pencarian**: 4 baris skeleton (kotak thumbnail 168×94 + bar judul/snippet/domain) tampil selama fetch DuckDuckGo, hilang di semua outcome (hasil, robot-check, error).
+- **Semua App & Games**: `ShimmerBar` seukuran tile ditaruh **di belakang** FitArtView di `item_app.xml`/`item_game.xml` sebagai placeholder selama artwork ter-bind (artwork PackageManager lokal memang nyaris instan — sesuai catatan brief, shimmer di sini berperan sebagai placeholder di belakang artwork; tile tanpa artwork sama sekali menyembunyikannya dan memakai fallback inisial seperti sebelumnya).
+
+## Keterbatasan fase 4.3 (jujur)
+
+1. Semua perubahan **compile-verified**; belum ada verifikasi runtime/emulator. Khususnya: panel SSL baru bisa dibuktikan hanya saat ada situs yang sertifikatnya gagal di TV; kualitas "nge-blend" blur dan rasa shimmer dinilai user di TV.
+2. Persetujuan "Tetap Buka" bersifat per-sesi proses app — app di-force-stop / TV restart akan bertanya lagi. Itu disengaja (persetujuan permanen untuk sertifikat rusak tidak aman).
+3. Shimmer memakai satu animator ValueAnimator di main thread dengan invalidate per bar — jumlah bar per layar kecil (±40 terburuk di Bola), jauh di bawah beban animasi UI biasa di TV ini.

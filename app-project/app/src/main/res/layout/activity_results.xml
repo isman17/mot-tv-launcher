@@ -89,6 +89,159 @@
             android:textColor="#FFD166"
             android:textSize="15sp" />
 
+        <!-- Skeleton result rows while fetching (phase 4.3): mirrors
+             item_result.xml (thumb box + title/snippet/domain bars). -->
+        <LinearLayout
+            android:id="@+id/resultsSkeleton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:orientation="vertical"
+            android:visibility="gone">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="10dp"
+                android:orientation="horizontal"
+                android:padding="10dp">
+
+                <com.mottv.launcher.ShimmerBar
+                    android:layout_width="168dp"
+                    android:layout_height="94dp" />
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="14dp"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+                    <com.mottv.launcher.ShimmerBar
+                        android:layout_width="match_parent"
+                        android:layout_height="17dp" />
+
+                    <com.mottv.launcher.ShimmerBar
+                        android:layout_width="match_parent"
+                        android:layout_height="13dp"
+                        android:layout_marginTop="9dp"
+                        android:layout_marginEnd="60dp" />
+
+                    <com.mottv.launcher.ShimmerBar
+                        android:layout_width="120dp"
+                        android:layout_height="12dp"
+                        android:layout_marginTop="9dp" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="10dp"
+                android:orientation="horizontal"
+                android:padding="10dp">
+
+                <com.mottv.launcher.ShimmerBar
+                    android:layout_width="168dp"
+                    android:layout_height="94dp" />
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="14dp"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+                    <com.mottv.launcher.ShimmerBar
+                        android:layout_width="match_parent"
+                        android:layout_height="17dp"
+                        android:layout_marginEnd="40dp" />
+
+                    <com.mottv.launcher.ShimmerBar
+                        android:layout_width="match_parent"
+                        android:layout_height="13dp"
+                        android:layout_marginTop="9dp"
+                        android:layout_marginEnd="110dp" />
+
+                    <com.mottv.launcher.ShimmerBar
+                        android:layout_width="120dp"
+                        android:layout_height="12dp"
+                        android:layout_marginTop="9dp" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="10dp"
+                android:orientation="horizontal"
+                android:padding="10dp">
+
+                <com.mottv.launcher.ShimmerBar
+                    android:layout_width="168dp"
+                    android:layout_height="94dp" />
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="14dp"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+                    <com.mottv.launcher.ShimmerBar
+                        android:layout_width="match_parent"
+                        android:layout_height="17dp"
+                        android:layout_marginEnd="80dp" />
+
+                    <com.mottv.launcher.ShimmerBar
+                        android:layout_width="match_parent"
+                        android:layout_height="13dp"
+                        android:layout_marginTop="9dp"
+                        android:layout_marginEnd="30dp" />
+
+                    <com.mottv.launcher.ShimmerBar
+                        android:layout_width="120dp"
+                        android:layout_height="12dp"
+                        android:layout_marginTop="9dp" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:padding="10dp">
+
+                <com.mottv.launcher.ShimmerBar
+                    android:layout_width="168dp"
+                    android:layout_height="94dp" />
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="14dp"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+                    <com.mottv.launcher.ShimmerBar
+                        android:layout_width="match_parent"
+                        android:layout_height="17dp"
+                        android:layout_marginEnd="20dp" />
+
+                    <com.mottv.launcher.ShimmerBar
+                        android:layout_width="match_parent"
+                        android:layout_height="13dp"
+                        android:layout_marginTop="9dp"
+                        android:layout_marginEnd="90dp" />
+
+                    <com.mottv.launcher.ShimmerBar
+                        android:layout_width="120dp"
+                        android:layout_height="12dp"
+                        android:layout_marginTop="9dp" />
+                </LinearLayout>
+            </LinearLayout>
+        </LinearLayout>
+
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/resultsList"
             android:layout_width="match_parent"

@@ -118,6 +118,7 @@ class AllAppsActivity : AppCompatActivity() {
         inner class VH(view: View) : RecyclerView.ViewHolder(view) {
             val card: View = view.findViewById(R.id.appCard)
             val art: FitArtView = view.findViewById(R.id.appArt)
+            val shimmer: View = view.findViewById(R.id.appShimmer)
             val initial: TextView = view.findViewById(R.id.appInitial)
             val label: TextView = view.findViewById(R.id.appLabel)
         }
@@ -139,6 +140,15 @@ class AllAppsActivity : AppCompatActivity() {
             holder.card.background = grad
 
             val density = holder.card.resources.displayMetrics.density
+            // Shimmer placeholder sits behind the artwork while it is
+            // bound (phase 4.3); tiles with no artwork at all use the
+            // initial-letter fallback instead, so the shimmer hides.
+            holder.shimmer.visibility =
+                if (item.art?.banner != null || item.art?.icon != null) {
+                    View.VISIBLE
+                } else {
+                    View.GONE
+                }
             when {
                 TileArt.isUsableBanner(item.art) ->
                     holder.art.setFullArt(item.art!!.banner)

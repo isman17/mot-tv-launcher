@@ -71,27 +71,40 @@ object TileArt {
     /**
      * Blurred + darkened copy of [d]'s bitmap, used as the letterbox
      * backdrop behind a FIT_CENTER foreground (phase-4 "thumbnail
-     * kepotong" fix: artwork is never cropped again). The blur is a cheap
-     * hard downscale (÷16) followed by a filtered upscale — pre-rendered
-     * once per source bitmap and cached, no runtime blur passes.
+     * kepotong" fix: artwork is never cropped again).
+     *
+     * Phase 4.3 (user: "background blurnya masih kurang ngeblend"): the
+     * blur is HEAVIER than phase 4 — a ÷24 downscale (was ÷16) and TWO
+     * filtered upscale passes with an extra downscale between them,
+     * which stacks into a smooth gaussian-ish falloff instead of one
+     * visible step. Pre-rendered once per source bitmap and cached; the
+     * view layer adds overscan + a gradient veil on top (see FitArtView)
+     * so the backdrop melts into the tile with no hard rectangle seam.
+     * The source bitmap is never recycled (it belongs to the caller).
      */
     fun blurredBackdrop(d: Drawable?): Bitmap? {
         val src = toBitmap(d) ?: return null
         synchronized(backdropCache) {
             backdropCache[src]?.let { return it }
         }
-        val smallW = (src.width / 16).coerceAtLeast(1)
-        val smallH = (src.height / 16).coerceAtLeast(1)
-        val small = Bitmap.createScaledBitmap(src, smallW, smallH, true)
+        val temps = ArrayList<Bitmap>()
+        fun scaled(b: Bitmap, w: Int, h: Int): Bitmap {
+            val r = Bitmap.createScaledBitmap(b, w.coerceAtLeast(1), h.coerceAtLeast(1), true)
+            if (r !== src && r !== b) temps.add(r)
+            return r
+        }
+        val small = scaled(src, src.width / 24, src.height / 24)
         val upW = (src.width / 2).coerceAtLeast(2)
         val upH = (src.height / 2).coerceAtLeast(2)
-        val up = Bitmap.createScaledBitmap(small, upW, upH, true)
-        if (small !== src && small !== up) small.recycle()
-        val out = up.copy(Bitmap.Config.ARGB_8888, true)
-        if (up !== src) up.recycle()
-        // Darken so foreground art + labels stay readable over it.
+        val up1 = scaled(small, upW, upH)
+        // Second smoothing pass: shrink the upscale again, then back up.
+        val mid = scaled(up1, upW / 3, upH / 3)
+        val smooth = scaled(mid, upW, upH)
+        val out = smooth.copy(Bitmap.Config.ARGB_8888, true)
+        for (t in temps) if (t !== out) t.recycle()
+        // Consistent darkening so foreground art + labels stay readable.
         val canvas = Canvas(out)
-        val paint = Paint().apply { color = Color.argb(105, 0, 0, 0) }
+        val paint = Paint().apply { color = Color.argb(110, 0, 0, 0) }
         canvas.drawRect(0f, 0f, out.width.toFloat(), out.height.toFloat(), paint)
         synchronized(backdropCache) { backdropCache[src] = out }
         return out

@@ -12,6 +12,13 @@
         android:layout_width="match_parent"
         android:layout_height="92dp">
 
+        <!-- Shimmer placeholder behind the artwork (phase 4.3): fills the
+             tile until the app's banner/icon is bound over it. -->
+        <com.mottv.launcher.ShimmerBar
+            android:id="@+id/appShimmer"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+
         <!-- No-crop artwork (phase 4): blur backdrop + FIT_CENTER original -->
         <com.mottv.launcher.FitArtView
             android:id="@+id/appArt"

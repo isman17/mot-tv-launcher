@@ -82,6 +82,7 @@ class GamesActivity : AppCompatActivity() {
         inner class VH(view: View) : RecyclerView.ViewHolder(view) {
             val card: View = view.findViewById(R.id.gameCard)
             val art: FitArtView = view.findViewById(R.id.gameArt)
+            val shimmer: View = view.findViewById(R.id.gameShimmer)
             val initial: TextView = view.findViewById(R.id.gameInitial)
             val label: TextView = view.findViewById(R.id.gameLabel)
         }
@@ -110,6 +111,14 @@ class GamesActivity : AppCompatActivity() {
             holder.card.background = grad
             // Same rules as Home: sharp banner shown WHOLE over its blurred
             // backdrop (phase 4 — never cropped); otherwise icon centered.
+            // Shimmer placeholder behind the artwork while it binds
+            // (phase 4.3); no-artwork tiles (incl. the store tile) hide it.
+            holder.shimmer.visibility =
+                if (item.art?.banner != null || item.art?.icon != null) {
+                    View.VISIBLE
+                } else {
+                    View.GONE
+                }
             val density = holder.card.resources.displayMetrics.density
             when {
                 TileArt.isUsableBanner(item.art) ->
