@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- TV banner (320x180 target). Simple branded gradient in v1. -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item>
+        <shape android:shape="rectangle">
+            <gradient
+                android:angle="315"
+                android:startColor="#3D414B"
+                android:endColor="#26282E"
+                android:type="linear" />
+        </shape>
+    </item>
+    <item
+        android:drawable="@drawable/ic_foreground_art"
+        android:gravity="center"
+        android:width="72dp"
+        android:height="72dp" />
+</layer-list>

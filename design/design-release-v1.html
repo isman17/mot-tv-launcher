@@ -1,0 +1,164 @@
+<style>
+*{box-sizing:border-box}
+.wrap{font-family:system-ui,-apple-system,sans-serif;color:var(--hatch-widget-text,#222);max-width:1060px;margin:0 auto;display:flex;flex-direction:column;gap:18px}
+.cap{font-weight:800;font-size:14px;display:flex;justify-content:space-between;align-items:baseline}
+.cap span{font-weight:500;font-size:12px;color:var(--hatch-widget-muted,#888)}
+.tv{aspect-ratio:16/9;width:100%;border-radius:16px;overflow:hidden;color:#fff;padding:3.4% 4.2%;display:flex;flex-direction:column;background:linear-gradient(155deg,#3d414b,#26282e 78%);box-shadow:0 14px 36px #0005;position:relative}
+.top{display:flex;justify-content:space-between;align-items:center;font-size:clamp(8px,1.45vw,12.5px);gap:8px}
+.pill{background:#ffffff1c;border:1px solid #ffffff2b;border-radius:999px;padding:5px 11px;white-space:nowrap}
+.pill.on{background:#fff;color:#191c22;font-weight:800}
+.pill.gold{background:linear-gradient(90deg,#ffd166,#ff7a1a);color:#26221a;font-weight:800;border-color:transparent}
+.title{font-size:clamp(15px,2.7vw,24px);font-weight:850}
+.mut{color:#ffffffa8}.small{font-size:clamp(8px,1.35vw,11px)}
+.foc{border:2.5px solid #fff!important;background:#ffffff1f!important}
+.chips{display:flex;gap:7px;flex-wrap:wrap;margin-top:9px}
+.chip{display:flex;align-items:center;gap:7px;border:1px solid #ffffff35;background:#ffffff12;border-radius:999px;padding:4px 12px 4px 5px;font-size:clamp(8px,1.4vw,11.5px)}
+.chip.on{background:#fff;color:#191c22;font-weight:800;border-color:#fff}
+.llogo{width:clamp(17px,2.8vw,24px);aspect-ratio:1;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;font-size:clamp(6px,1.1vw,9px);font-weight:900;flex-shrink:0;color:#333;border:1px solid #0002}
+.tag{font-size:clamp(7px,1.1vw,9px);border-radius:6px;padding:2px 7px;font-weight:800;color:#10131a}
+</style>
+<div class="wrap">
+
+<!-- 1 HOME -->
+<div><div class="cap">1 · Beranda <span>versi release — semua keputusan design digabung</span></div><div style="height:7px"></div>
+<div class="tv">
+<div class="top"><span style="display:flex;gap:6px"><span class="pill on">Beranda</span><span class="pill">Jadwal Bola</span><span class="pill">Jadwal Sholat</span></span><span style="display:flex;gap:6px;align-items:center"><span class="pill">Wi-Fi</span><span class="pill">Pengaturan</span><span class="pill"><b>07:55</b> · Sel, 27 Okt</span></span></div>
+<div style="flex:1;display:flex;align-items:center;gap:4%">
+<div style="flex:1.25"><div style="font-size:clamp(11px,2vw,17px);font-weight:700;background:linear-gradient(90deg,#ffd166,#ff5e8a);-webkit-background-clip:text;background-clip:text;color:transparent">Selamat pagi</div>
+<div style="font-size:clamp(26px,5.2vw,48px);font-weight:850;line-height:1.05;margin-top:2px">Netflix</div>
+<div class="mut" style="font-size:clamp(9px,1.6vw,14px);margin-top:5px">Film, serial, dan dokumenter — lanjutkan tontonanmu</div>
+<div style="margin-top:9px"><span class="pill gold">OK — Buka</span></div></div>
+<div style="flex:1;aspect-ratio:16/8.2;border-radius:14px;background:linear-gradient(140deg,#ff3d47,#7a0d18);display:flex;align-items:flex-end;padding:10px 12px;box-shadow:0 10px 26px #0006"><b style="font-size:clamp(14px,2.6vw,24px)">NETFLIX</b></div></div>
+<div style="font-size:clamp(9px,1.6vw,14px);font-style:italic">“Beri aku 10 pemuda, niscaya akan kuguncangkan dunia.” <span style="float:right;font-style:normal;font-weight:800;color:#ffd166">— Soekarno</span></div>
+<div style="display:grid;grid-template-columns:repeat(6,1fr);gap:1.8%;margin-top:8px">
+<div style="border-radius:13px;aspect-ratio:16/9.6;background:linear-gradient(140deg,#22b8f0,#2563eb);padding:7px 9px;display:flex;flex-direction:column;justify-content:space-between;border:2.5px solid transparent"><b style="font-size:clamp(13px,2.4vw,21px)">◎</b><span style="font-size:clamp(8px,1.4vw,12px);font-weight:700">Browser</span></div>
+<div class="foc" style="border-radius:13px;aspect-ratio:16/9.6;background:linear-gradient(140deg,#ff3d47,#8f1019);padding:7px 9px;display:flex;flex-direction:column;justify-content:space-between"><b style="font-size:clamp(13px,2.4vw,21px)">N</b><span style="font-size:clamp(8px,1.4vw,12px);font-weight:700">Netflix</span></div>
+<div style="border-radius:13px;aspect-ratio:16/9.6;background:linear-gradient(140deg,#2ee6a8,#0a9d7a);padding:7px 9px;display:flex;flex-direction:column;justify-content:space-between;border:2.5px solid transparent"><b style="font-size:clamp(13px,2.4vw,21px)">W</b><span style="font-size:clamp(8px,1.4vw,12px);font-weight:700">WeTV</span></div>
+<div style="border-radius:13px;aspect-ratio:16/9.6;background:linear-gradient(140deg,#ffb020,#ff5e1a);padding:7px 9px;display:flex;flex-direction:column;justify-content:space-between;border:2.5px solid transparent"><b style="font-size:clamp(13px,2.4vw,21px)">V</b><span style="font-size:clamp(8px,1.4vw,12px);font-weight:700">Vidio</span></div>
+<div style="border-radius:13px;aspect-ratio:16/9.6;background:linear-gradient(140deg,#c86bff,#6d28d9);padding:7px 9px;display:flex;flex-direction:column;justify-content:space-between;border:2.5px solid transparent"><b style="font-size:clamp(13px,2.4vw,21px)">G</b><span style="font-size:clamp(8px,1.4vw,12px);font-weight:700">Games</span></div>
+<div style="border-radius:13px;aspect-ratio:16/9.6;background:linear-gradient(140deg,#ffffff,#dfe5ec);color:#123;padding:7px 9px;display:flex;flex-direction:column;justify-content:space-between;border:2.5px solid transparent"><b style="font-size:clamp(13px,2.4vw,21px);color:#0a9d58">▶</b><span style="font-size:clamp(8px,1.4vw,12px);font-weight:700">Play Store</span></div>
+</div></div></div>
+</div>
+
+<!-- 2 GAMES -->
+<div><div class="cap">2 · Games <span>folder — isi otomatis dari game yang terinstal</span></div><div style="height:7px"></div>
+<div class="tv">
+<div class="top"><span class="pill">← Kembali</span><span class="title">Games</span><span class="pill">8 terinstal</span></div>
+<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:2.2%;margin-top:12px">
+<div class="foc" style="border-radius:13px;aspect-ratio:16/10;background:linear-gradient(140deg,#ff9f1a,#e5484d);padding:8px 10px;display:flex;flex-direction:column;justify-content:space-between"><b style="font-size:clamp(12px,2.2vw,19px)">SG</b><span style="font-size:clamp(8px,1.45vw,12px);font-weight:700">Stumble Guys</span></div>
+<div style="border-radius:13px;aspect-ratio:16/10;background:linear-gradient(140deg,#22b8f0,#1d4ed8);padding:8px 10px;display:flex;flex-direction:column;justify-content:space-between;border:2.5px solid transparent"><b style="font-size:clamp(12px,2.2vw,19px)">RB</b><span style="font-size:clamp(8px,1.45vw,12px);font-weight:700">Roblox</span></div>
+<div style="border-radius:13px;aspect-ratio:16/10;background:linear-gradient(140deg,#3ddc84,#0a7d4f);padding:8px 10px;display:flex;flex-direction:column;justify-content:space-between;border:2.5px solid transparent"><b style="font-size:clamp(12px,2.2vw,19px)">MC</b><span style="font-size:clamp(8px,1.45vw,12px);font-weight:700">Minecraft</span></div>
+<div style="border-radius:13px;aspect-ratio:16/10;background:linear-gradient(140deg,#c86bff,#6d28d9);padding:8px 10px;display:flex;flex-direction:column;justify-content:space-between;border:2.5px solid transparent"><b style="font-size:clamp(12px,2.2vw,19px)">AL</b><span style="font-size:clamp(8px,1.45vw,12px);font-weight:700">Asphalt Legends</span></div>
+</div>
+<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:2.2%;margin-top:2.2%">
+<div style="border-radius:13px;aspect-ratio:16/10;background:linear-gradient(140deg,#ffd166,#f97316);padding:8px 10px;display:flex;flex-direction:column;justify-content:space-between;border:2.5px solid transparent"><b style="font-size:clamp(12px,2.2vw,19px)">CR</b><span style="font-size:clamp(8px,1.45vw,12px);font-weight:700">Crossy Road</span></div>
+<div style="border-radius:13px;aspect-ratio:16/10;background:linear-gradient(140deg,#38bdf8,#0369a1);padding:8px 10px;display:flex;flex-direction:column;justify-content:space-between;border:2.5px solid transparent"><b style="font-size:clamp(12px,2.2vw,19px)">EF</b><span style="font-size:clamp(8px,1.45vw,12px);font-weight:700">eFootball</span></div>
+<div style="border-radius:13px;aspect-ratio:16/10;background:linear-gradient(140deg,#f472b6,#9d174d);padding:8px 10px;display:flex;flex-direction:column;justify-content:space-between;border:2.5px solid transparent"><b style="font-size:clamp(12px,2.2vw,19px)">SS</b><span style="font-size:clamp(8px,1.45vw,12px);font-weight:700">Subway Surfers</span></div>
+<div style="border-radius:13px;aspect-ratio:16/10;background:#ffffff08;padding:8px 10px;display:flex;flex-direction:column;justify-content:space-between;border:2.5px dashed #ffffff45"><b style="font-size:clamp(12px,2.2vw,19px);color:#0ee08a">+</b><span style="font-size:clamp(8px,1.45vw,12px);font-weight:700">Instal dari Play Store</span></div>
+</div>
+<div class="mut small" style="margin-top:auto">Game baru yang diinstal dari Play Store muncul di sini otomatis.</div>
+</div></div>
+
+<!-- 3 PENCARIAN -->
+<div><div class="cap">3 · Pencarian <span>modul browser bawaan — ketik pakai remote atau suara</span></div><div style="height:7px"></div>
+<div class="tv">
+<div class="top"><span class="pill">← Kembali</span><span class="title">Pencarian</span><span class="pill">Browser bawaan</span></div>
+<div class="foc" style="margin-top:12px;background:#ffffff14;border-radius:13px;padding:11px 14px;display:flex;justify-content:space-between;align-items:center;font-size:clamp(11px,2vw,17px)"><span><span class="mut">⌕</span>&nbsp; dune part two<span style="color:#ffd166">▏</span></span><span class="pill gold">Mic — tahan tombol suara</span></div>
+<div class="chips"><span class="chip on">Semua</span><span class="chip">Film</span><span class="chip">Musik</span><span class="chip">Video</span><span class="chip">Web</span></div>
+<div style="display:grid;grid-template-columns:repeat(10,1fr);gap:5px;margin-top:12px;text-align:center;font-size:clamp(8px,1.5vw,12.5px)">
+<span class="pill" style="border-radius:9px">a</span><span class="pill" style="border-radius:9px">b</span><span class="pill" style="border-radius:9px">c</span><span class="pill" style="border-radius:9px">d</span><span class="pill" style="border-radius:9px">e</span><span class="pill" style="border-radius:9px">f</span><span class="pill" style="border-radius:9px">g</span><span class="pill" style="border-radius:9px">h</span><span class="pill" style="border-radius:9px">i</span><span class="pill" style="border-radius:9px">j</span>
+<span class="pill" style="border-radius:9px">k</span><span class="pill" style="border-radius:9px">l</span><span class="pill" style="border-radius:9px">m</span><span class="pill" style="border-radius:9px">n</span><span class="pill" style="border-radius:9px">o</span><span class="pill" style="border-radius:9px">p</span><span class="pill" style="border-radius:9px">q</span><span class="pill" style="border-radius:9px">r</span><span class="pill" style="border-radius:9px">s</span><span class="pill" style="border-radius:9px">t</span>
+<span class="pill" style="border-radius:9px">u</span><span class="pill" style="border-radius:9px">v</span><span class="pill" style="border-radius:9px">w</span><span class="pill" style="border-radius:9px">x</span><span class="pill" style="border-radius:9px">y</span><span class="pill" style="border-radius:9px">z</span><span class="pill" style="border-radius:9px">0</span><span class="pill" style="border-radius:9px">1</span><span class="pill" style="border-radius:9px">2</span><span class="pill" style="border-radius:9px">3</span>
+</div>
+<div style="margin-top:12px" class="small"><span class="mut">Terakhir dicari:</span> &nbsp;<span class="pill">dune part two</span> <span class="pill">highlight arsenal</span> <span class="pill">lagu indonesia 90an</span></div>
+</div></div>
+
+<!-- 4 HASIL -->
+<div><div class="cap">4 · Hasil Pencarian <span>video → pemutar bawaan · web → browser bawaan</span></div><div style="height:7px"></div>
+<div class="tv">
+<div class="top"><span class="pill">← Kembali</span><span class="title" style="font-size:clamp(13px,2.3vw,20px)">“dune part two”</span><span class="pill">12 hasil</span></div>
+<div class="foc" style="display:flex;gap:12px;background:#ffffff10;border-radius:13px;padding:9px 11px;margin-top:11px;border:2.5px solid transparent;align-items:center"><div style="width:19%;aspect-ratio:16/9;border-radius:9px;background:linear-gradient(140deg,#ffb020,#b34700);flex-shrink:0"></div><div style="flex:1"><b style="font-size:clamp(10px,1.9vw,16px)">Dune: Part Two — Official Trailer</b><div class="mut small" style="margin-top:2px">youtube.com · 3:24</div></div><span class="tag" style="background:#22b8f0">VIDEO</span></div>
+<div style="display:flex;gap:12px;background:#ffffff10;border-radius:13px;padding:9px 11px;margin-top:8px;border:2.5px solid transparent;align-items:center"><div style="width:19%;aspect-ratio:16/9;border-radius:9px;background:linear-gradient(140deg,#2ee6a8,#065f46);flex-shrink:0"></div><div style="flex:1"><b style="font-size:clamp(10px,1.9vw,16px)">Dune: Part Two (2024) — Sinopsis &amp; Ulasan</b><div class="mut small" style="margin-top:2px">situsfilm.example · artikel</div></div><span class="tag" style="background:#ffd166">FILM</span></div>
+<div style="display:flex;gap:12px;background:#ffffff10;border-radius:13px;padding:9px 11px;margin-top:8px;border:2.5px solid transparent;align-items:center"><div style="width:19%;aspect-ratio:16/9;border-radius:9px;background:linear-gradient(140deg,#c86bff,#4c1d95);flex-shrink:0"></div><div style="flex:1"><b style="font-size:clamp(10px,1.9vw,16px)">Dune Part Two — Soundtrack Lengkap</b><div class="mut small" style="margin-top:2px">musik.example · playlist</div></div><span class="tag" style="background:#f472b6">MUSIK</span></div>
+<div class="mut small" style="margin-top:auto">Konten Netflix / WeTV / Vidio (DRM) tetap dibuka di app resminya masing-masing.</div>
+</div></div>
+
+<!-- 5 PLAYER -->
+<div><div class="cap">5 · Pemutar Video <span>kontrol hilang otomatis setelah 4 detik</span></div><div style="height:7px"></div>
+<div class="tv" style="background:linear-gradient(160deg,#f59e0b33,#00000088 60%),linear-gradient(140deg,#31518f,#131c31 70%)">
+<div style="display:flex;justify-content:space-between;align-items:flex-start"><div><b style="font-size:clamp(12px,2.3vw,20px)">Dune: Part Two — Official Trailer</b><div class="mut small" style="margin-top:2px">youtube.com</div></div><span class="pill">1080p</span></div>
+<div style="flex:1;display:flex;align-items:center;justify-content:center"><span style="width:clamp(38px,7vw,62px);aspect-ratio:1;border-radius:50%;background:#ffffff26;border:1.5px solid #ffffff55;display:flex;align-items:center;justify-content:center;font-size:clamp(14px,2.6vw,23px)">❚❚</span></div>
+<div>
+<div style="display:flex;justify-content:space-between" class="small"><span>01:12</span><span>03:24</span></div>
+<div style="height:6px;border-radius:99px;background:#ffffff30;margin-top:4px"><div style="width:35%;height:100%;border-radius:99px;background:linear-gradient(90deg,#ffd166,#ff5e1a)"></div></div>
+<div style="display:flex;justify-content:center;gap:8px;margin-top:10px;font-size:clamp(9px,1.6vw,13px)"><span class="pill">⏮</span><span class="pill">−10 dtk</span><span class="pill on">❚❚ Jeda</span><span class="pill">+10 dtk</span><span class="pill">⏭</span><span class="pill">Subtitel</span><span class="pill">Volume</span><span class="pill">Layar Penuh</span></div>
+</div></div></div>
+
+<!-- 6 JADWAL BOLA -->
+<div><div class="cap">6 · Jadwal Bola <span>tab liga berlogo · grup per kompetisi</span></div><div style="height:7px"></div>
+<div class="tv">
+<div class="top"><span class="pill">← Kembali</span><span class="title">Jadwal Bola</span><span style="display:flex;gap:6px"><span class="pill">Kemarin</span><span class="pill on">Hari Ini</span><span class="pill">Besok</span><span class="pill gold">Pilih Tanggal</span></span></div>
+<div class="chips"><span class="chip on">Semua</span><span class="chip"><span class="llogo" style="color:#3d195b">PL</span>Premier League</span><span class="chip"><span class="llogo" style="color:#ee8707">LL</span>La Liga</span><span class="chip"><span class="llogo" style="color:#024494">SA</span>Serie A</span><span class="chip"><span class="llogo" style="color:#d20515">BL</span>Bundesliga</span><span class="chip"><span class="llogo" style="color:#0a1e5e">★</span>Champions</span><span class="chip"><span class="llogo" style="color:#c8102e">L1</span>Liga 1</span></div>
+<div style="display:flex;align-items:center;gap:9px;margin-top:11px;font-size:clamp(9px,1.6vw,13.5px);font-weight:800"><span class="llogo" style="color:#3d195b;width:clamp(20px,3.4vw,30px);font-size:clamp(7px,1.3vw,11px)">PL</span> Premier League · Inggris <span class="tag" style="background:#2ee6a8">LIGA</span></div>
+<div class="foc" style="display:flex;align-items:center;gap:10px;background:#ffffff10;border-radius:13px;padding:7px 12px;margin-top:6px;border:2.5px solid transparent"><div style="display:flex;align-items:center;gap:8px;flex:1;font-size:clamp(9px,1.7vw,14px);font-weight:700"><span style="width:clamp(22px,3.6vw,34px);aspect-ratio:1;border-radius:50%;background:#a50034;display:flex;align-items:center;justify-content:center;font-size:clamp(6px,1.1vw,9px);font-weight:900;border:1.5px solid #ffffff44">ARS</span>Arsenal</div><div style="text-align:center"><b style="font-size:clamp(11px,2vw,17px)">23:30</b><div class="small mut">Malam ini · WIB</div></div><div style="display:flex;align-items:center;gap:8px;flex:1;justify-content:flex-end;font-size:clamp(9px,1.7vw,14px);font-weight:700;text-align:right">Chelsea<span style="width:clamp(22px,3.6vw,34px);aspect-ratio:1;border-radius:50%;background:#034694;display:flex;align-items:center;justify-content:center;font-size:clamp(6px,1.1vw,9px);font-weight:900;border:1.5px solid #ffffff44">CHE</span></div><span class="pill small">Vidio · SCTV</span></div>
+<div style="display:flex;align-items:center;gap:9px;margin-top:10px;font-size:clamp(9px,1.6vw,13.5px);font-weight:800"><span class="llogo" style="color:#0a1e5e;width:clamp(20px,3.4vw,30px);font-size:clamp(7px,1.3vw,11px)">★</span> UEFA Champions League <span class="tag" style="background:#ffd166">CUP</span></div>
+<div style="display:flex;align-items:center;gap:10px;background:#ffffff10;border-radius:13px;padding:7px 12px;margin-top:6px;border:2.5px solid transparent"><div style="display:flex;align-items:center;gap:8px;flex:1;font-size:clamp(9px,1.7vw,14px);font-weight:700"><span style="width:clamp(22px,3.6vw,34px);aspect-ratio:1;border-radius:50%;background:#f5f0e6;color:#7a6212;display:flex;align-items:center;justify-content:center;font-size:clamp(6px,1.1vw,9px);font-weight:900;border:1.5px solid #ffffff44">RMA</span>Real Madrid</div><div style="text-align:center"><b style="font-size:clamp(11px,2vw,17px)">03:00</b><div class="small mut">Rabu dini hari</div></div><div style="display:flex;align-items:center;gap:8px;flex:1;justify-content:flex-end;font-size:clamp(9px,1.7vw,14px);font-weight:700;text-align:right">Bayern<span style="width:clamp(22px,3.6vw,34px);aspect-ratio:1;border-radius:50%;background:#dc052d;display:flex;align-items:center;justify-content:center;font-size:clamp(6px,1.1vw,9px);font-weight:900;border:1.5px solid #ffffff44">FCB</span></div><span class="pill small">SCTV · beIN</span></div>
+</div></div>
+
+<!-- 7 KALENDER BOLA -->
+<div><div class="cap">7 · Jadwal Bola — Pilih Tanggal <span>kalender bebas, navigasi full remote</span></div><div style="height:7px"></div>
+<div class="tv">
+<div class="top"><span class="pill">← Kembali</span><span class="title">Jadwal Bola</span><span class="pill gold">Pilih Tanggal</span></div>
+<div style="flex:1;display:flex;gap:3.5%;margin-top:11px;min-height:0">
+<div class="foc" style="width:44%;background:#ffffff12;border-radius:14px;padding:11px 13px;border:2.5px solid transparent"><div style="display:flex;justify-content:space-between;font-size:clamp(11px,2vw,16px);font-weight:800"><span>‹</span> Februari 2027 <span>›</span></div>
+<table style="width:100%;border-collapse:collapse;text-align:center;font-size:clamp(8px,1.5vw,12.5px);margin-top:6px"><tr style="color:#ffffff8c"><th>Sn</th><th>Sl</th><th>Rb</th><th>Km</th><th>Jm</th><th>Sb</th><th>Mg</th></tr>
+<tr><td style="padding:3.5px 0">1</td><td>2</td><td>3</td><td>4</td><td>5</td><td>6</td><td>7</td></tr>
+<tr><td style="padding:3.5px 0">8</td><td>9</td><td>10</td><td style="background:linear-gradient(90deg,#ffd166,#ff7a1a);color:#26221a;font-weight:900;border-radius:8px">11</td><td>12</td><td>13</td><td>14</td></tr>
+<tr><td style="padding:3.5px 0">15</td><td>16</td><td>17</td><td>18</td><td>19</td><td>20</td><td>21</td></tr>
+<tr><td style="padding:3.5px 0">22</td><td>23</td><td>24</td><td>25</td><td>26</td><td>27</td><td>28</td></tr>
+<tr style="color:#ffffff40"><td style="padding:3.5px 0">1</td><td>2</td><td>3</td><td>4</td><td>5</td><td>6</td><td>7</td></tr></table>
+<div class="small mut" style="margin-top:6px">‹ › ganti bulan · OK = pilih tanggal</div></div>
+<div style="flex:1"><div style="display:flex;align-items:center;gap:8px;font-size:clamp(9px,1.6vw,13px);font-weight:800"><span class="tag" style="background:#ffd166">CUP</span> Kamis, 11 Februari 2027</div>
+<div style="display:flex;align-items:center;gap:9px;background:#ffffff10;border-radius:13px;padding:8px 12px;margin-top:7px;font-size:clamp(9px,1.6vw,13.5px);font-weight:700"><span style="width:clamp(20px,3.2vw,30px);aspect-ratio:1;border-radius:50%;background:#7a1020;display:flex;align-items:center;justify-content:center;font-size:clamp(6px,1vw,8.5px);font-weight:900;border:1.5px solid #ffffff44">SEV</span> Sevilla <span style="text-align:center"><b>03:00</b><div class="small mut">WIB</div></span> <span style="margin-left:auto">Roma</span> <span style="width:clamp(20px,3.2vw,30px);aspect-ratio:1;border-radius:50%;background:#8a1538;display:flex;align-items:center;justify-content:center;font-size:clamp(6px,1vw,8.5px);font-weight:900;border:1.5px solid #ffffff44">ROM</span><span class="pill small">beIN · Vidio</span></div>
+<div class="mut" style="margin-top:9px;background:#ffffff0b;border:1px dashed #ffffff30;border-radius:13px;padding:9px 12px;font-size:clamp(8px,1.5vw,12px);line-height:1.5">Kompetisi lain di tanggal ini belum ada di data — ditampilkan apa adanya, bukan error.</div>
+</div></div></div></div>
+
+<!-- 8 JADWAL SHOLAT -->
+<div><div class="cap">8 · Jadwal Sholat <span>lokasi searchable · sumber data Kemenag</span></div><div style="height:7px"></div>
+<div class="tv">
+<div class="top"><span class="pill">← Kembali</span><span class="title">Jadwal Sholat</span><span class="pill">Selasa, 27 Okt 2026</span></div>
+<div style="display:flex;gap:2.5%;margin-top:10px">
+<div style="flex:1"><div class="foc" style="background:#ffffff14;border-radius:12px;padding:9px 13px;font-size:clamp(10px,1.8vw,15px);display:flex;justify-content:space-between;border:2.5px solid transparent"><span>⌕&nbsp; Kota Bandung, Jawa Barat</span><b>▾</b></div>
+<div style="background:#ffffff10;border:1px solid #ffffff2b;border-radius:12px;padding:5px;margin-top:6px;font-size:clamp(9px,1.6vw,13px)"><div style="padding:5px 9px;border-radius:8px;background:#2ee6a833;font-weight:800">✓ Kota Bandung</div><div style="padding:5px 9px">Kab. Bandung</div><div style="padding:5px 9px">Kab. Bandung Barat</div><div style="padding:5px 9px">Kota Bekasi</div></div></div>
+<div style="flex:1.15;display:flex;flex-direction:column;justify-content:center"><div class="small mut">Sholat berikutnya</div><div style="font-size:clamp(18px,3.6vw,32px);font-weight:850">Maghrib · 17:49</div><div style="margin-top:4px"><span class="pill gold">−38 menit lagi</span></div><div class="small mut" style="margin-top:7px;line-height:1.5">Ketik di field lokasi buat nyari kota/kabupaten lain — list-nya nyaring langsung. Lokasi terakhir kesimpen otomatis.</div></div></div>
+<div style="display:grid;grid-template-columns:repeat(8,1fr);gap:1.6%;margin-top:10px;text-align:center">
+<div style="background:#ffffff10;border-radius:11px;padding:7px 2px;opacity:.45"><div class="small mut" style="text-transform:uppercase;letter-spacing:.06em">Imsak</div><b style="font-size:clamp(11px,2vw,17px)">04:12</b></div>
+<div style="background:#ffffff10;border-radius:11px;padding:7px 2px;opacity:.45"><div class="small mut" style="text-transform:uppercase;letter-spacing:.06em">Subuh</div><b style="font-size:clamp(11px,2vw,17px)">04:22</b></div>
+<div style="background:#ffffff10;border-radius:11px;padding:7px 2px;opacity:.45"><div class="small mut" style="text-transform:uppercase;letter-spacing:.06em">Terbit</div><b style="font-size:clamp(11px,2vw,17px)">05:36</b></div>
+<div style="background:#ffffff10;border-radius:11px;padding:7px 2px;opacity:.45"><div class="small mut" style="text-transform:uppercase;letter-spacing:.06em">Dhuha</div><b style="font-size:clamp(11px,2vw,17px)">06:04</b></div>
+<div style="background:#ffffff10;border-radius:11px;padding:7px 2px;opacity:.45"><div class="small mut" style="text-transform:uppercase;letter-spacing:.06em">Dzuhur</div><b style="font-size:clamp(11px,2vw,17px)">11:37</b></div>
+<div style="background:#ffffff10;border-radius:11px;padding:7px 2px;opacity:.45"><div class="small mut" style="text-transform:uppercase;letter-spacing:.06em">Ashar</div><b style="font-size:clamp(11px,2vw,17px)">14:53</b></div>
+<div style="border-radius:11px;padding:7px 2px;background:linear-gradient(150deg,#ffd16633,#ff7a1a22);border:2px solid #ffd166"><div class="small" style="text-transform:uppercase;letter-spacing:.06em;color:#ffd166">Maghrib</div><b style="font-size:clamp(11px,2vw,17px)">17:49</b></div>
+<div style="background:#ffffff10;border-radius:11px;padding:7px 2px"><div class="small mut" style="text-transform:uppercase;letter-spacing:.06em">Isya</div><b style="font-size:clamp(11px,2vw,17px)">19:02</b></div>
+</div></div></div>
+
+<!-- 9 PENGATURAN -->
+<div><div class="cap">9 · Pengaturan <span>background bisa diganti, termasuk gambar sendiri</span></div><div style="height:7px"></div>
+<div class="tv">
+<div class="top"><span class="pill">← Kembali</span><span class="title">Pengaturan</span><span class="pill">Tersimpan otomatis</span></div>
+<div style="flex:1;display:flex;gap:3.5%;margin-top:11px;min-height:0">
+<div style="width:26%;display:flex;flex-direction:column;gap:7px;font-size:clamp(9px,1.7vw,14px)"><span class="foc" style="background:#ffffff10;border-radius:11px;padding:9px 12px;border:2.5px solid transparent;font-weight:800">Background</span><span style="background:#ffffff10;border-radius:11px;padding:9px 12px;border:2.5px solid transparent">Lokasi Sholat</span><span style="background:#ffffff10;border-radius:11px;padding:9px 12px;border:2.5px solid transparent">Bahasa</span><span style="background:#ffffff10;border-radius:11px;padding:9px 12px;border:2.5px solid transparent;color:#ffd166">Pengaturan TV (Android) ↗</span><span style="background:#ffffff10;border-radius:11px;padding:9px 12px;border:2.5px solid transparent">Tentang</span></div>
+<div style="flex:1"><div style="font-weight:800;font-size:clamp(10px,1.9vw,16px)">Gambar Background</div>
+<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:2%;margin-top:8px">
+<div class="foc" style="border-radius:11px;aspect-ratio:16/10;background:linear-gradient(150deg,#3d414b,#26282e);padding:6px 8px;font-size:clamp(7px,1.3vw,10.5px);font-weight:700;border:2.5px solid transparent">Abu Gelap ✓</div>
+<div style="border-radius:11px;aspect-ratio:16/10;background:linear-gradient(150deg,#38bdf8,#14532d);padding:6px 8px;font-size:clamp(7px,1.3vw,10.5px);font-weight:700;border:2.5px solid transparent">Gunung</div>
+<div style="border-radius:11px;aspect-ratio:16/10;background:linear-gradient(150deg,#fbbf24,#0369a1);padding:6px 8px;font-size:clamp(7px,1.3vw,10.5px);font-weight:700;border:2.5px solid transparent">Pantai</div>
+<div style="border-radius:11px;aspect-ratio:16/10;background:linear-gradient(150deg,#312e81,#0f172a);padding:6px 8px;font-size:clamp(7px,1.3vw,10.5px);font-weight:700;border:2.5px solid transparent">Kota Malam</div>
+<div style="border-radius:11px;aspect-ratio:16/10;background:#ffffff08;padding:6px 8px;font-size:clamp(7px,1.3vw,10.5px);font-weight:700;border:2.5px dashed #ffffff45">+ Gambar Sendiri</div></div>
+<div style="margin-top:11px;font-size:clamp(9px,1.6vw,13px)">Kegelapan lapisan di atas gambar &nbsp;<b>45%</b><div style="height:7px;border-radius:99px;background:#ffffff2b;margin-top:5px"><div style="width:45%;height:100%;border-radius:99px;background:linear-gradient(90deg,#ffd166,#ff7a1a)"></div></div></div>
+<div style="margin-top:10px" class="small"><span class="mut">Mode gambar:</span> &nbsp;<span class="pill on" style="color:#191c22">Penuhi Layar</span> <span class="pill">Pas di Layar</span></div>
+<div class="small mut" style="margin-top:9px;line-height:1.5">Gambar sendiri diambil dari flashdisk/penyimpanan TV, dikecilkan ke 1080p dan disimpen di dalam app — flashdisk boleh dicabut setelahnya.</div>
+</div></div></div></div>
+
+<div style="font-size:12.5px;color:var(--hatch-widget-muted,#888);line-height:1.6">Aturan design yang konsisten di semua halaman: alas abu-abu gelap, fokus selalu border putih tebal, aksen emas buat aksi utama &amp; status “berikutnya”, pill di top bar bentuknya sama. Thumbnail app/game/logo di mockup ini placeholder — di app asli diganti banner &amp; logo asli dari TV dan sumber datanya. Pintu masuk Jadwal Bola &amp; Jadwal Sholat di Beranda lewat 2 pill top bar (sebelah pill Beranda), row app tetap 6 tile.</div>
+</div>

@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Leanback banner (320x180 target), phase 4.2: branded dark-gray gradient
+     with the generated app logo (TV + roof frame, gold play) centered at
+     120dp — replaces the generic vector glyph used by tv_banner.xml. -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item>
+        <shape android:shape="rectangle">
+            <gradient
+                android:angle="315"
+                android:startColor="#3D414B"
+                android:endColor="#26282E"
+                android:type="linear" />
+        </shape>
+    </item>
+    <item
+        android:drawable="@drawable/ic_launcher_logo"
+        android:gravity="center"
+        android:width="120dp"
+        android:height="120dp" />
+</layer-list>

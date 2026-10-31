@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/gameCard"
+    android:layout_width="match_parent"
+    android:layout_height="150dp"
+    android:layout_margin="7dp"
+    android:clipToOutline="true"
+    android:focusable="true"
+    android:clickable="true">
+
+    <!-- Phase 4: no-crop artwork (blur backdrop + FIT_CENTER) -->
+    <com.mottv.launcher.FitArtView
+        android:id="@+id/gameArt"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
+    <TextView
+        android:id="@+id/gameInitial"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="top|start"
+        android:paddingStart="12dp"
+        android:paddingTop="8dp"
+        android:textColor="#FFFFFF"
+        android:textSize="26sp"
+        android:textStyle="bold" />
+
+    <TextView
+        android:id="@+id/gameLabel"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|start"
+        android:paddingStart="12dp"
+        android:paddingEnd="10dp"
+        android:paddingBottom="9dp"
+        android:shadowColor="#99000000"
+        android:shadowDx="0"
+        android:shadowDy="1"
+        android:shadowRadius="6"
+        android:textColor="#FFFFFF"
+        android:textSize="15sp"
+        android:textStyle="bold" />
+</FrameLayout>

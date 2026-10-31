@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Bundled "Pantai" background: layered gradient placeholder art (no photo bundled in v1). -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
+    <gradient
+        android:angle="270"
+        android:startColor="#FBBF24"
+        android:centerColor="#FB923C"
+        android:endColor="#0369A1"
+        android:type="linear" />
+</shape>

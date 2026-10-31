@@ -1,0 +1,14 @@
+# Signing key — NEVER commit (private key material + password)
+keystore/
+
+# Built APKs live in GitHub Releases, not in the repo
+*.apk
+
+# Gradle / Android build state
+app-project/.gradle/
+app-project/build/
+app-project/app/build/
+app-project/local.properties
+
+# Build-loop scratch (logs, fetch state)
+.build/
