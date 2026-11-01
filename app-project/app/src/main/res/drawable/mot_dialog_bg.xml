@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Dark panel for the AppActions long-press dialog (fase 6.1): the app
+     theme is a light AppCompat theme, so the stock AlertDialog list
+     rendered near-invisible focus on the TV. The dialog now draws its own
+     dark panel + mot_focus_row items instead. -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
+    <corners android:radius="14dp" />
+    <solid android:color="#26282E" />
+</shape>

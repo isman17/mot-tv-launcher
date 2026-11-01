@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Shared focus system (fase 6.1) — white-filled pills (old @drawable/pill_on:
+     selected date pill / selected chip / player play-pause). A white stroke
+     would be invisible on a white fill, so the focused ring is GOLD 3dp —
+     the one deliberate deviation from the white-stroke rule, made so the
+     focused state stays unmistakable. Pressed = light grey. -->
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:state_pressed="true">
+        <shape android:shape="rectangle">
+            <corners android:radius="999dp" />
+            <solid android:color="#DADADA" />
+        </shape>
+    </item>
+    <item android:state_focused="true">
+        <shape android:shape="rectangle">
+            <corners android:radius="999dp" />
+            <stroke android:width="3dp" android:color="#FFD166" />
+            <solid android:color="#FFFFFF" />
+        </shape>
+    </item>
+    <item>
+        <shape android:shape="rectangle">
+            <corners android:radius="999dp" />
+            <solid android:color="#FFFFFF" />
+        </shape>
+    </item>
+</selector>

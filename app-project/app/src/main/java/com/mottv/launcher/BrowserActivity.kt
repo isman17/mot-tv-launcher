@@ -100,7 +100,10 @@ class BrowserActivity : AppCompatActivity() {
             urlInput.requestFocus()
         }
 
-        findViewById<TextView>(R.id.goBtn).setOnClickListener { go() }
+        findViewById<TextView>(R.id.goBtn).apply {
+            setOnClickListener { go() }
+            focusFx(1.05f) // fase 6.1: bg is mot_focus_gold in layout
+        }
         urlInput.setOnEditorActionListener { _, actionId, _ ->
             if (actionId == EditorInfo.IME_ACTION_GO) {
                 go(); true
@@ -109,24 +112,16 @@ class BrowserActivity : AppCompatActivity() {
     }
 
     private fun styleSslButton(tv: TextView, gold: Boolean, onClick: () -> Unit) {
-        fun applyDefault(t: TextView) {
-            t.background = ContextCompat.getDrawable(
-                this, if (gold) R.drawable.pill_gold else R.drawable.pill_bg
-            )
-            t.setTextColor(
-                if (gold) Color.parseColor("#26221A") else Color.WHITE
-            )
-        }
-        tv.setOnFocusChangeListener { v, hasFocus ->
-            val t = v as TextView
-            if (hasFocus) {
-                t.background = ContextCompat.getDrawable(this, R.drawable.pill_on)
-                t.setTextColor(Color.parseColor("#191C22"))
-            } else {
-                applyDefault(t)
-            }
-        }
-        applyDefault(tv)
+        // Fase 6.1: shared selector backgrounds (default state identical
+        // to the old pill_gold/pill_bg) + focusFx scale — the SSL panel is
+        // a dead-end screen, its three buttons must be unmissable.
+        tv.background = ContextCompat.getDrawable(
+            this, if (gold) R.drawable.mot_focus_gold else R.drawable.mot_focus_pill
+        )
+        tv.setTextColor(
+            if (gold) Color.parseColor("#26221A") else Color.WHITE
+        )
+        tv.focusFx(1.05f)
         tv.setOnClickListener { onClick() }
     }
 

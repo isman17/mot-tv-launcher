@@ -2,13 +2,18 @@ package com.mottv.launcher
 
 import android.app.Activity
 import android.content.Intent
+import android.graphics.Color
+import android.graphics.Typeface
 import android.net.Uri
 import android.provider.Settings
 import android.view.KeyEvent
 import android.view.View
 import android.view.ViewParent
+import android.widget.LinearLayout
+import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
+import androidx.core.content.ContextCompat
 
 /**
  * Long-press app menu (phase 5): the same small dialog on Home tiles,
@@ -86,10 +91,62 @@ object AppActions {
             items.add("Copot Pemasangan")
             actions.add { requestUninstall(activity, packageName, label) }
         }
-        AlertDialog.Builder(activity)
-            .setTitle(label)
-            .setItems(items.toTypedArray()) { _, which -> actions[which]() }
-            .show()
+
+        // Fase 6.1: NOT the stock AlertDialog list. The app theme is a
+        // light AppCompat theme, so setItems rendered a pale list whose
+        // focus highlight was nearly invisible on the TV. The menu is now
+        // a custom dark panel: own title + one focusable row per action,
+        // each row carrying the shared mot_focus_row selector, so D-pad
+        // focus shows the same brighten + white stroke as everywhere
+        // else in the app. First row takes focus on open.
+        fun dp(v: Int): Int = (v * activity.resources.displayMetrics.density).toInt()
+        val container = LinearLayout(activity).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(dp(20), dp(16), dp(20), dp(20))
+        }
+        container.addView(TextView(activity).apply {
+            text = label
+            textSize = 18f
+            setTypeface(typeface, Typeface.BOLD)
+            setTextColor(Color.WHITE)
+            setPadding(dp(4), 0, dp(4), dp(12))
+        })
+        val dialogHolder = arrayOfNulls<AlertDialog>(1)
+        var firstRow: TextView? = null
+        items.forEachIndexed { i, text ->
+            val row = TextView(activity).apply {
+                this.text = text
+                textSize = 16f
+                setTextColor(Color.WHITE)
+                background = ContextCompat.getDrawable(activity, R.drawable.mot_focus_row)
+                isFocusable = true
+                isClickable = true
+                setPadding(dp(16), dp(12), dp(16), dp(12))
+                layoutParams = LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT
+                ).apply { if (i > 0) topMargin = dp(6) }
+                focusFx(1.01f)
+                setOnClickListener {
+                    dialogHolder[0]?.dismiss()
+                    actions[i]()
+                }
+            }
+            if (firstRow == null) firstRow = row
+            container.addView(row)
+        }
+        val dialog = AlertDialog.Builder(activity)
+            .setView(container)
+            .create()
+        dialogHolder[0] = dialog
+        dialog.show()
+        // The window background must be replaced AFTER show() (the
+        // AppCompat panel drawable would otherwise frame the dark panel
+        // in light grey).
+        dialog.window?.setBackgroundDrawable(
+            ContextCompat.getDrawable(activity, R.drawable.mot_dialog_bg)
+        )
+        firstRow?.requestFocus()
     }
 
     private fun openAppInfo(activity: Activity, packageName: String) {

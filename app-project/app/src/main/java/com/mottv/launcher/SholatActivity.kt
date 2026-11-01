@@ -99,15 +99,9 @@ class SholatActivity : AppCompatActivity() {
         pickerStatus = findViewById(R.id.pickerStatus)
         changeCityBtn = findViewById(R.id.changeCityBtn)
 
-        changeCityBtn.setOnFocusChangeListener { v, hasFocus ->
-            val t = v as TextView
-            t.background = ContextCompat.getDrawable(
-                this, if (hasFocus) R.drawable.pill_on else R.drawable.pill_gold
-            )
-            t.setTextColor(
-                if (hasFocus) Color.parseColor("#191C22") else Color.parseColor("#26221A")
-            )
-        }
+        // Fase 6.1: bg is the shared mot_focus_gold selector (layout,
+        // static dark text); focusFx adds scale/lift.
+        changeCityBtn.focusFx(1.05f)
         changeCityBtn.setOnClickListener { openPicker() }
 
         val list = findViewById<RecyclerView>(R.id.cityList)
@@ -407,16 +401,12 @@ class SholatActivity : AppCompatActivity() {
             holder.text.setTextColor(Color.WHITE)
             holder.text.textSize = 15f
             holder.text.setPadding(dp(14), dp(10), dp(14), dp(10))
-            holder.itemView.background = ContextCompat.getDrawable(this@SholatActivity, R.drawable.menu_item)
+            // Fase 6.1: shared row selector — focus brightens + strokes
+            // the row; text stays white (no more pill_on swap). Row → no
+            // scale.
+            holder.itemView.background = ContextCompat.getDrawable(this@SholatActivity, R.drawable.mot_focus_row)
             holder.itemView.isFocusable = true
             holder.itemView.isClickable = true
-            holder.itemView.setOnFocusChangeListener { v, hasFocus ->
-                v.background = ContextCompat.getDrawable(
-                    this@SholatActivity,
-                    if (hasFocus) R.drawable.pill_on else R.drawable.menu_item
-                )
-                holder.text.setTextColor(if (hasFocus) Color.parseColor("#191C22") else Color.WHITE)
-            }
             holder.itemView.setOnClickListener { onClick(city) }
         }
     }

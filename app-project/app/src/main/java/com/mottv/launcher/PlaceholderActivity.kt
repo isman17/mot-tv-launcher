@@ -35,6 +35,7 @@ class PlaceholderActivity : AppCompatActivity() {
         if (!buttonLabel.isNullOrEmpty()) {
             button.visibility = View.VISIBLE
             button.text = buttonLabel
+            button.focusFx(1.05f) // fase 6.1: bg is mot_focus_gold in layout
             button.setOnClickListener {
                 when (intent.getStringExtra(EXTRA_TARGET)) {
                     "sholat" -> startActivity(Intent(this, SholatActivity::class.java))

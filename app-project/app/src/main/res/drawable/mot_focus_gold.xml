@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Shared focus system (fase 6.1) — primary/gold pill buttons whose
+     UNFOCUSED look is exactly the old @drawable/pill_gold. Focused = same
+     gold gradient + 3dp white stroke; pressed = deeper gold. -->
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:state_pressed="true">
+        <shape android:shape="rectangle">
+            <corners android:radius="999dp" />
+            <gradient
+                android:angle="0"
+                android:startColor="#FFB84D"
+                android:endColor="#E85D00"
+                android:type="linear" />
+        </shape>
+    </item>
+    <item android:state_focused="true">
+        <shape android:shape="rectangle">
+            <corners android:radius="999dp" />
+            <stroke android:width="3dp" android:color="#FFFFFF" />
+            <gradient
+                android:angle="0"
+                android:startColor="#FFD166"
+                android:endColor="#FF7A1A"
+                android:type="linear" />
+        </shape>
+    </item>
+    <item>
+        <shape android:shape="rectangle">
+            <corners android:radius="999dp" />
+            <gradient
+                android:angle="0"
+                android:startColor="#FFD166"
+                android:endColor="#FF7A1A"
+                android:type="linear" />
+        </shape>
+    </item>
+</selector>

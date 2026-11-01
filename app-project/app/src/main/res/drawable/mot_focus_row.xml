@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Shared focus system (fase 6.1) — full-width rows/cards whose UNFOCUSED
+     look is exactly the old @drawable/menu_item (radius 11dp). Focused =
+     brighter fill + 3dp white stroke; pressed = translucent gold. Used by
+     settings rows, result cards, city rows, match rows, keyboard keys and
+     text fields. Rows get NO scale (see FocusFx usage) — stroke + brighten
+     is their focus signal. -->
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:state_pressed="true">
+        <shape android:shape="rectangle">
+            <corners android:radius="11dp" />
+            <solid android:color="#40FFD166" />
+        </shape>
+    </item>
+    <item android:state_focused="true">
+        <shape android:shape="rectangle">
+            <corners android:radius="11dp" />
+            <stroke android:width="3dp" android:color="#FFFFFF" />
+            <solid android:color="#36FFFFFF" />
+        </shape>
+    </item>
+    <item>
+        <shape android:shape="rectangle">
+            <corners android:radius="11dp" />
+            <solid android:color="#1AFFFFFF" />
+        </shape>
+    </item>
+</selector>

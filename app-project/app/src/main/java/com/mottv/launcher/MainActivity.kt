@@ -164,16 +164,9 @@ class MainActivity : AppCompatActivity() {
 
     private fun setupPill(pill: TextView, onClick: () -> Unit) {
         pill.setOnClickListener { onClick() }
-        pill.setOnFocusChangeListener { v, hasFocus ->
-            val tv = v as TextView
-            if (hasFocus) {
-                tv.background = ContextCompat.getDrawable(this, R.drawable.pill_on)
-                tv.setTextColor(Color.parseColor("#191C22"))
-            } else {
-                tv.background = ContextCompat.getDrawable(this, R.drawable.pill_bg)
-                tv.setTextColor(Color.WHITE)
-            }
-        }
+        // Fase 6.1: focus background = shared mot_focus_pill selector
+        // (layout); focusFx adds scale/lift. Replaces the old pill_on swap.
+        pill.focusFx(1.05f)
     }
 
     private fun dp(value: Int): Int = (value * resources.displayMetrics.density).toInt()

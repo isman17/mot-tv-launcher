@@ -33,14 +33,21 @@ class HomeOverrideActivity : AppCompatActivity() {
         statusText = findViewById(R.id.homeOverrideStatus)
         toggleBtn = findViewById(R.id.homeOverrideToggle)
 
-        findViewById<TextView>(R.id.homeOverrideEnable).setOnClickListener {
-            openAccessibilitySettings()
+        // Focus visibility (fase 6.1): backgrounds are the mot_focus_*
+        // selectors in the layout; focusFx adds scale/lift on all three.
+        findViewById<TextView>(R.id.homeOverrideEnable).apply {
+            setOnClickListener { openAccessibilitySettings() }
+            focusFx(1.05f)
         }
         toggleBtn.setOnClickListener {
             HomeOverrideStore.setOverrideOn(this, !HomeOverrideStore.isOverrideOn(this))
             refreshStatus()
         }
-        findViewById<TextView>(R.id.homeOverrideBack).setOnClickListener { finish() }
+        toggleBtn.focusFx(1.05f)
+        findViewById<TextView>(R.id.homeOverrideBack).apply {
+            setOnClickListener { finish() }
+            focusFx(1.05f)
+        }
 
         refreshStatus()
         findViewById<TextView>(R.id.homeOverrideEnable).requestFocus()

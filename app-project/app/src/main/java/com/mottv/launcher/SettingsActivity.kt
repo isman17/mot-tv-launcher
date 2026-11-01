@@ -118,16 +118,12 @@ class SettingsActivity : AppCompatActivity() {
     private fun menuItem(id: Int, hintText: String, onClick: () -> Unit) {
         val tv = findViewById<TextView>(id)
         tv.setOnClickListener { onClick() }
-        tv.setOnFocusChangeListener { v, hasFocus ->
-            val t = v as TextView
-            if (hasFocus) {
-                hint.text = hintText
-                t.background = ContextCompat.getDrawable(this, R.drawable.pill_on)
-                if (id != R.id.menuAndroid) t.setTextColor(0xFF191C22.toInt())
-            } else {
-                t.background = ContextCompat.getDrawable(this, R.drawable.menu_item)
-                t.setTextColor(if (id == R.id.menuAndroid) 0xFFFFD166.toInt() else 0xFFFFFFFF.toInt())
-            }
+        // Fase 6.1: the focus BACKGROUND is the shared mot_focus_row
+        // selector (via the SettingsMenuItem style) — brighter fill +
+        // white stroke, text color untouched. This listener now only
+        // drives the explanation hint on the right.
+        tv.setOnFocusChangeListener { _, hasFocus ->
+            if (hasFocus) hint.text = hintText
         }
     }
 }

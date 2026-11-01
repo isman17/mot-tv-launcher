@@ -39,10 +39,20 @@
             android:layout_weight="1"
             android:orientation="horizontal">
 
-            <LinearLayout
+            <!-- ScrollView (fase 6.1): the menu outgrew 720p — bottom rows
+                 were unreachable. Focused rows auto-scroll into view;
+                 bottom padding keeps the last row off the screen edge. -->
+            <ScrollView
                 android:layout_width="330dp"
-                android:layout_height="wrap_content"
-                android:orientation="vertical">
+                android:layout_height="match_parent"
+                android:fillViewport="true"
+                android:scrollbars="none">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:paddingBottom="16dp">
 
                 <TextView
                     android:id="@+id/menuBackground"
@@ -84,7 +94,8 @@
                     android:id="@+id/menuAbout"
                     style="@style/SettingsMenuItem"
                     android:text="Tentang" />
-            </LinearLayout>
+                </LinearLayout>
+            </ScrollView>
 
             <TextView
                 android:id="@+id/settingsHint"

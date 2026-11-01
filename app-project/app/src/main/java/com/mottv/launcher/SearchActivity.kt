@@ -59,13 +59,19 @@ class SearchActivity : AppCompatActivity() {
         BackgroundStore.applyTo(this, findViewById(R.id.bgImage), findViewById(R.id.bgOverlay))
 
         input = findViewById(R.id.queryInput)
+        // Fase 6.1: pill backgrounds are the shared mot_focus_* selectors
+        // in the layout; focusFx adds scale/lift. (The old
+        // styleFocusablePill background swap is gone app-wide.)
         findViewById<TextView>(R.id.backBtn).apply {
-            styleFocusablePill(this)
+            focusFx(1.05f)
             setOnClickListener { finish() }
         }
-        findViewById<TextView>(R.id.searchBtn).setOnClickListener { doSearch() }
+        findViewById<TextView>(R.id.searchBtn).apply {
+            focusFx(1.05f)
+            setOnClickListener { doSearch() }
+        }
         findViewById<TextView>(R.id.micBtn).apply {
-            styleFocusablePill(this)
+            focusFx(1.05f)
             setOnClickListener { startVoiceSearch() }
         }
         input.setOnEditorActionListener { _, actionId, _ ->
@@ -87,27 +93,6 @@ class SearchActivity : AppCompatActivity() {
 
     private fun dp(v: Int): Int = (v * resources.displayMetrics.density).toInt()
 
-    /** Shared pill focus style (white when focused), same pattern as Home. */
-    private fun styleFocusablePill(tv: TextView, selected: Boolean = false) {
-        tv.setOnFocusChangeListener { v, hasFocus ->
-            val t = v as TextView
-            when {
-                hasFocus -> {
-                    t.background = ContextCompat.getDrawable(this, R.drawable.pill_on)
-                    t.setTextColor(Color.parseColor("#191C22"))
-                }
-                selected -> {
-                    t.background = ContextCompat.getDrawable(this, R.drawable.pill_on)
-                    t.setTextColor(Color.parseColor("#191C22"))
-                }
-                else -> {
-                    t.background = ContextCompat.getDrawable(this, R.drawable.pill_bg)
-                    t.setTextColor(Color.WHITE)
-                }
-            }
-        }
-    }
-
     private fun buildChips() {
         val row = findViewById<LinearLayout>(R.id.chipsRow)
         row.removeAllViews()
@@ -122,28 +107,23 @@ class SearchActivity : AppCompatActivity() {
                 textSize = 14f
                 isFocusable = true
                 isClickable = true
+                // Fase 6.1: selected chip = mot_focus_white (default is the
+                // old solid-white pill_on; focused adds a gold ring),
+                // unselected = mot_focus_pill. Focus itself is the
+                // drawable's job now — no listener swap.
                 background = ContextCompat.getDrawable(
                     this@SearchActivity,
-                    if (cat == selectedCategory) R.drawable.pill_on else R.drawable.pill_bg
+                    if (cat == selectedCategory) R.drawable.mot_focus_white
+                    else R.drawable.mot_focus_pill
                 )
                 setTextColor(
                     if (cat == selectedCategory) Color.parseColor("#191C22") else Color.WHITE
                 )
+                focusFx(1.05f)
                 setOnClickListener {
                     selectedCategory = cat
                     buildChips()
                     chipViews[cat]?.requestFocus()
-                }
-                setOnFocusChangeListener { v, hasFocus ->
-                    val t = v as TextView
-                    val isSel = t.text.toString() == selectedCategory
-                    if (hasFocus || isSel) {
-                        t.background = ContextCompat.getDrawable(this@SearchActivity, R.drawable.pill_on)
-                        t.setTextColor(Color.parseColor("#191C22"))
-                    } else {
-                        t.background = ContextCompat.getDrawable(this@SearchActivity, R.drawable.pill_bg)
-                        t.setTextColor(Color.WHITE)
-                    }
                 }
             }
             chipViews[cat] = chip
@@ -186,22 +166,15 @@ class SearchActivity : AppCompatActivity() {
             isFocusable = true
             isClickable = true
             setTextColor(if (gold) Color.parseColor("#26221A") else Color.WHITE)
+            // Fase 6.1: keys use the shared selectors (gold key = gold
+            // selector; letter keys = row selector, same radius/fill as
+            // the old menu_item) + focusFx. No more pill_on swap.
             background = ContextCompat.getDrawable(
-                this@SearchActivity, if (gold) R.drawable.pill_gold else R.drawable.menu_item
+                this@SearchActivity,
+                if (gold) R.drawable.mot_focus_gold else R.drawable.mot_focus_row
             )
+            focusFx(1.06f)
             setOnClickListener { onClick() }
-            setOnFocusChangeListener { v, hasFocus ->
-                val t = v as TextView
-                if (hasFocus) {
-                    t.background = ContextCompat.getDrawable(this@SearchActivity, R.drawable.pill_on)
-                    t.setTextColor(Color.parseColor("#191C22"))
-                } else {
-                    t.background = ContextCompat.getDrawable(
-                        this@SearchActivity, if (gold) R.drawable.pill_gold else R.drawable.menu_item
-                    )
-                    t.setTextColor(if (gold) Color.parseColor("#26221A") else Color.WHITE)
-                }
-            }
         }
         val params = GridLayout.LayoutParams(
             GridLayout.spec(row), GridLayout.spec(col, span, 1f)
@@ -318,10 +291,10 @@ class SearchActivity : AppCompatActivity() {
                 text = recent
                 textSize = 13f
                 setTextColor(Color.WHITE)
-                background = ContextCompat.getDrawable(this@SearchActivity, R.drawable.pill_bg)
+                background = ContextCompat.getDrawable(this@SearchActivity, R.drawable.mot_focus_pill)
                 isFocusable = true
                 isClickable = true
-                styleFocusablePill(this)
+                focusFx(1.05f)
                 setOnClickListener {
                     input.setText(recent)
                     input.setSelection(input.length())

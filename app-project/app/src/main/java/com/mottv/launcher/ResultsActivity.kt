@@ -66,13 +66,7 @@ class ResultsActivity : AppCompatActivity() {
         resultsSkeleton = findViewById(R.id.resultsSkeleton)
 
         findViewById<TextView>(R.id.backBtn).apply {
-            setOnFocusChangeListener { v, hasFocus ->
-                val t = v as TextView
-                t.background = ContextCompat.getDrawable(
-                    this@ResultsActivity, if (hasFocus) R.drawable.pill_on else R.drawable.pill_bg
-                )
-                t.setTextColor(if (hasFocus) Color.parseColor("#191C22") else Color.WHITE)
-            }
+            focusFx(1.05f) // fase 6.1: bg is mot_focus_pill in layout
             setOnClickListener { finish() }
         }
 
@@ -102,21 +96,13 @@ class ResultsActivity : AppCompatActivity() {
                 isFocusable = true
                 isClickable = true
                 val sel = cat == category
+                // Fase 6.1: same shared selectors as SearchActivity chips.
                 background = ContextCompat.getDrawable(
-                    this@ResultsActivity, if (sel) R.drawable.pill_on else R.drawable.pill_bg
+                    this@ResultsActivity,
+                    if (sel) R.drawable.mot_focus_white else R.drawable.mot_focus_pill
                 )
                 setTextColor(if (sel) Color.parseColor("#191C22") else Color.WHITE)
-                setOnFocusChangeListener { v, hasFocus ->
-                    val t = v as TextView
-                    val isSel = t.text.toString() == category
-                    if (hasFocus || isSel) {
-                        t.background = ContextCompat.getDrawable(this@ResultsActivity, R.drawable.pill_on)
-                        t.setTextColor(Color.parseColor("#191C22"))
-                    } else {
-                        t.background = ContextCompat.getDrawable(this@ResultsActivity, R.drawable.pill_bg)
-                        t.setTextColor(Color.WHITE)
-                    }
-                }
+                focusFx(1.05f)
                 setOnClickListener {
                     if (category != cat) {
                         category = cat
@@ -391,12 +377,9 @@ class ResultsActivity : AppCompatActivity() {
                 holder.badge.visibility = View.GONE
             }
 
-            holder.card.setOnFocusChangeListener { v, hasFocus ->
-                v.background = ContextCompat.getDrawable(
-                    this@ResultsActivity,
-                    if (hasFocus) R.drawable.tile_focus_border else R.drawable.menu_item
-                )
-            }
+            // Fase 6.1: no listener — the card background in item_result.xml
+            // IS the shared mot_focus_row selector (brighten + white
+            // stroke on focus). Full-width row → no scale, by design.
             holder.card.setOnClickListener { onClick(item) }
         }
     }

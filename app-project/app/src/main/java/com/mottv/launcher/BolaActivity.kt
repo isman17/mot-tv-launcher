@@ -179,12 +179,9 @@ class BolaActivity : AppCompatActivity() {
         stylePill(datePills.getValue("today")) { selectDate(LocalDate.now()) }
         stylePill(datePills.getValue("next")) { selectDate(LocalDate.now().plusDays(1)) }
         findViewById<TextView>(R.id.datePick).apply {
-            setOnFocusChangeListener { v, hasFocus ->
-                val t = v as TextView
-                t.background = ContextCompat.getDrawable(
-                    this@BolaActivity, if (hasFocus) R.drawable.pill_on else R.drawable.pill_gold
-                )
-            }
+            // Fase 6.1: bg is mot_focus_gold in the layout (focused adds
+            // the white stroke); focusFx adds scale/lift.
+            focusFx(1.05f)
             setOnClickListener {
                 calendarLauncher.launch(
                     Intent(this@BolaActivity, CalendarActivity::class.java)
@@ -303,22 +300,11 @@ class BolaActivity : AppCompatActivity() {
     private fun dp(v: Int): Int = (v * resources.displayMetrics.density).toInt()
 
     private fun stylePill(tv: TextView, onClick: () -> Unit) {
-        tv.setOnFocusChangeListener { v, hasFocus ->
-            val t = v as TextView
-            val selected = when (t) {
-                datePills["prev"] -> selectedDate == LocalDate.now().minusDays(1)
-                datePills["today"] -> selectedDate == LocalDate.now()
-                datePills["next"] -> selectedDate == LocalDate.now().plusDays(1)
-                else -> false
-            }
-            if (hasFocus || selected) {
-                t.background = ContextCompat.getDrawable(this, R.drawable.pill_on)
-                t.setTextColor(Color.parseColor("#191C22"))
-            } else {
-                t.background = ContextCompat.getDrawable(this, R.drawable.pill_bg)
-                t.setTextColor(Color.WHITE)
-            }
-        }
+        // Fase 6.1: focus visuals come from the mot_focus_* selector
+        // backgrounds; this only wires the click + scale/lift. Which
+        // selector a date pill wears (white = selected day) is decided
+        // by refreshDatePills().
+        tv.focusFx(1.05f)
         tv.setOnClickListener { onClick() }
     }
 
@@ -330,13 +316,17 @@ class BolaActivity : AppCompatActivity() {
                 datePills["next"] -> selectedDate == LocalDate.now().plusDays(1)
                 else -> false
             }
-            if (selected && !pill.hasFocus()) {
-                pill.background = ContextCompat.getDrawable(this, R.drawable.pill_on)
-                pill.setTextColor(Color.parseColor("#191C22"))
-            } else if (!selected && !pill.hasFocus()) {
-                pill.background = ContextCompat.getDrawable(this, R.drawable.pill_bg)
-                pill.setTextColor(Color.WHITE)
-            }
+            // Selected day keeps the old solid-white look via
+            // mot_focus_white (its focused state adds a gold ring);
+            // unselected days wear mot_focus_pill. Focus no longer
+            // recolours the text — the selector stroke carries it.
+            pill.background = ContextCompat.getDrawable(
+                this,
+                if (selected) R.drawable.mot_focus_white else R.drawable.mot_focus_pill
+            )
+            pill.setTextColor(
+                if (selected) Color.parseColor("#191C22") else Color.WHITE
+            )
         }
     }
 
@@ -1016,14 +1006,11 @@ class BolaActivity : AppCompatActivity() {
                 LinearLayout.LayoutParams.WRAP_CONTENT
             ).apply { bottomMargin = dp(7) }
             setPadding(dp(12), dp(9), dp(12), dp(9))
-            background = ContextCompat.getDrawable(this@BolaActivity, R.drawable.menu_item)
+            // Fase 6.1: shared row selector (brighten + white stroke on
+            // focus) instead of swapping to tile_focus_border by hand.
+            // Full-width row → no scale.
+            background = ContextCompat.getDrawable(this@BolaActivity, R.drawable.mot_focus_row)
             elevation = dp(2).toFloat()
-            setOnFocusChangeListener { v, hasFocus ->
-                v.background = ContextCompat.getDrawable(
-                    this@BolaActivity,
-                    if (hasFocus) R.drawable.tile_focus_border else R.drawable.menu_item
-                )
-            }
         }
 
         val homeBadge = circleBadge(34, initialsOf(match.home), Color.parseColor("#333333"))
@@ -1163,23 +1150,25 @@ class BolaActivity : AppCompatActivity() {
                     ImgCache.load(league.badgeUrl, holder.logoImg)
                 }
             }
-            applyStyle(holder, selected, focused = false)
-            holder.card.setOnFocusChangeListener { _, hasFocus ->
-                applyStyle(holder, selected, hasFocus)
-            }
+            applyStyle(holder, selected)
+            holder.card.focusFx(1.05f)
             holder.card.setOnClickListener {
                 onSelect(league?.id)
                 notifyDataSetChanged()
             }
         }
 
-        private fun applyStyle(holder: VH, selected: Boolean, focused: Boolean) {
-            val active = selected || focused
+        private fun applyStyle(holder: VH, selected: Boolean) {
+            // Fase 6.1: selected chip = mot_focus_white (old solid-white
+            // look; gold ring when focused), unselected = mot_focus_pill
+            // (white stroke when focused). Focus state lives in the
+            // drawables — applyStyle only encodes selection now.
             holder.card.background = ContextCompat.getDrawable(
-                this@BolaActivity, if (active) R.drawable.pill_on else R.drawable.pill_bg
+                this@BolaActivity,
+                if (selected) R.drawable.mot_focus_white else R.drawable.mot_focus_pill
             )
             holder.name.setTextColor(
-                if (active) Color.parseColor("#191C22") else Color.WHITE
+                if (selected) Color.parseColor("#191C22") else Color.WHITE
             )
         }
     }

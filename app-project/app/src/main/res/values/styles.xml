@@ -4,7 +4,7 @@
         <item name="android:layout_width">match_parent</item>
         <item name="android:layout_height">wrap_content</item>
         <item name="android:layout_marginBottom">8dp</item>
-        <item name="android:background">@drawable/menu_item</item>
+        <item name="android:background">@drawable/mot_focus_row</item>
         <item name="android:clickable">true</item>
         <item name="android:focusable">true</item>
         <item name="android:paddingStart">16dp</item>

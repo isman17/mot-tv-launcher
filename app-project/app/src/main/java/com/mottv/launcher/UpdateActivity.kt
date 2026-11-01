@@ -76,7 +76,16 @@ class UpdateActivity : AppCompatActivity() {
                 "(isman17/mot-tv-launcher). Tekan tombol di bawah buat memeriksa."
 
         actionBtn.setOnClickListener { onAction() }
-        findViewById<TextView>(R.id.updateBack).setOnClickListener { finish() }
+        findViewById<TextView>(R.id.updateBack).apply {
+            setOnClickListener { finish() }
+            focusFx(1.05f)
+        }
+        // Focus visibility (fase 6.1): background is the mot_focus_gold
+        // selector in the layout; this adds the scale/lift half. The
+        // button keeps this listener in every state (Periksa / Unduh &
+        // Pasang / Beri Izin Instal / Pasang Sekarang) — only its text
+        // and enabled-ness change.
+        actionBtn.focusFx(1.05f)
         actionBtn.requestFocus()
     }
 

@@ -41,7 +41,6 @@ class BackgroundActivity : AppCompatActivity() {
 
         for ((id, pair) in options) {
             val tv = findViewById<TextView>(id)
-            focusStyle(tv)
             tv.setOnClickListener {
                 if (pair.first == BackgroundStore.TYPE_CUSTOM) {
                     pickImage()
@@ -76,25 +75,16 @@ class BackgroundActivity : AppCompatActivity() {
 
     private fun modeButton(id: Int, mode: String) {
         val tv = findViewById<TextView>(id)
-        focusStyle(tv)
         tv.setOnClickListener {
             BackgroundStore.save(this, mode = mode)
             refresh()
         }
     }
 
-    private fun focusStyle(tv: TextView) {
-        tv.setOnFocusChangeListener { v, hasFocus ->
-            val t = v as TextView
-            if (hasFocus) {
-                t.background = ContextCompat.getDrawable(this, R.drawable.pill_on)
-                t.setTextColor(0xFF191C22.toInt())
-            } else {
-                t.background = ContextCompat.getDrawable(this, R.drawable.menu_item)
-                t.setTextColor(0xFFFFFFFF.toInt())
-            }
-        }
-    }
+    // Fase 6.1: the old focusStyle() background swap is gone — option and
+    // mode rows carry the shared mot_focus_row selector via the
+    // SettingsOptionRow style, so focus shows as brighten + white stroke
+    // and the white text / "✓" selected marker stay untouched.
 
     private fun refresh() {
         val type = BackgroundStore.getType(this)

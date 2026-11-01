@@ -132,23 +132,27 @@ class PlayerActivity : AppCompatActivity() {
             if (dur != C.TIME_UNSET) exo.seekTo(dur)
         }
         playPauseBtn.apply {
-            setOnFocusChangeListener { v, hasFocus ->
-                val t = v as TextView
-                t.background = ContextCompat.getDrawable(
-                    this@PlayerActivity, if (hasFocus) R.drawable.pill_gold else R.drawable.pill_on
-                )
-            }
+            // Fase 6.1: bg is mot_focus_white in the layout (unfocused =
+            // old white pill; focused adds a gold ring — a white ring
+            // would be invisible on the white fill).
+            focusFx(1.06f)
             setOnClickListener { togglePlayPause() }
         }
         wireButton(R.id.btnSubs) { toggleSubtitles() }
-        findViewById<TextView>(R.id.btnOpenBrowser).setOnClickListener {
-            startActivity(
-                Intent(this, BrowserActivity::class.java)
-                    .putExtra(BrowserActivity.EXTRA_URL, mediaUrl)
-            )
-            finish()
+        findViewById<TextView>(R.id.btnOpenBrowser).apply {
+            focusFx(1.06f) // bg is mot_focus_gold in layout
+            setOnClickListener {
+                startActivity(
+                    Intent(this@PlayerActivity, BrowserActivity::class.java)
+                        .putExtra(BrowserActivity.EXTRA_URL, mediaUrl)
+                )
+                finish()
+            }
         }
-        findViewById<TextView>(R.id.btnClose).setOnClickListener { finish() }
+        findViewById<TextView>(R.id.btnClose).apply {
+            focusFx(1.06f)
+            setOnClickListener { finish() }
+        }
 
         pokeControls()
         playPauseBtn.requestFocus()
@@ -175,13 +179,9 @@ class PlayerActivity : AppCompatActivity() {
 
     private fun wireButton(id: Int, onClick: () -> Unit) {
         findViewById<TextView>(id).apply {
-            setOnFocusChangeListener { v, hasFocus ->
-                val t = v as TextView
-                t.background = ContextCompat.getDrawable(
-                    this@PlayerActivity, if (hasFocus) R.drawable.pill_on else R.drawable.pill_bg
-                )
-                t.setTextColor(if (hasFocus) Color.parseColor("#191C22") else Color.WHITE)
-            }
+            // Fase 6.1: bg is the shared mot_focus_pill selector (layout);
+            // focusFx adds scale/lift. Replaces the old pill_on swap.
+            focusFx(1.06f)
             setOnClickListener {
                 onClick()
                 pokeControls()

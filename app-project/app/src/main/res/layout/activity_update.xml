@@ -15,13 +15,24 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
 
-    <LinearLayout
+    <!-- ScrollView (fase 6.1): title + status + release-notes card +
+         buttons can exceed 720p; fillViewport keeps short content
+         centered exactly like before, tall content scrolls with focus. -->
+    <ScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:fillViewport="true"
+        android:scrollbars="none">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
         android:gravity="center"
         android:orientation="vertical"
         android:paddingStart="120dp"
-        android:paddingEnd="120dp">
+        android:paddingTop="24dp"
+        android:paddingEnd="120dp"
+        android:paddingBottom="32dp">
 
         <TextView
             android:layout_width="wrap_content"
@@ -72,7 +83,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="26dp"
-            android:background="@drawable/pill_gold"
+            android:background="@drawable/mot_focus_gold"
             android:clickable="true"
             android:focusable="true"
             android:paddingStart="24dp"
@@ -89,7 +100,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="12dp"
-            android:background="@drawable/pill_bg"
+            android:background="@drawable/mot_focus_pill"
             android:clickable="true"
             android:focusable="true"
             android:paddingStart="24dp"
@@ -100,4 +111,5 @@
             android:textColor="#FFFFFF"
             android:textSize="15sp" />
     </LinearLayout>
+    </ScrollView>
 </FrameLayout>

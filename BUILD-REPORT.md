@@ -511,3 +511,94 @@ Perintah build hijau sekali jalan: pola offline persis fase 1–5 (`assembleDebu
 2. Bounce jaring pengaman bereaksi terhadap *setiap* window-state change dari paket home bawaan — termasuk permukaan transien milik launcherx (mis. overlay pencarian suaranya). Debounce 3 detik membatasi gangguannya, dan tombol Home di permukaan itu memang seharusnya membawa user ke sini; tapi bila di TV ternyata ada permukaan launcherx yang user pakai secara sah (mis. panel notifikasi bawaan), itu kandidat penyesuaian fase berikutnya berdasarkan laporan user — bukan ditebak sekarang.
 3. Layanan aksesibilitas bisa dimatikan sistem/OEM saat app di-force-stop atau sesudah update besar TV; status di layar Pengaturan akan menampilkannya jujur sebagai BELUM AKTIF dan jalurnya tinggal diaktifkan ulang sekali.
 4. Saklar master default ON berarti perilaku override langsung hidup begitu layanan diaktifkan user di Setelan — itu memang maksudnya; mematikannya tidak butuh membuka Setelan TV (cukup dari layar yang sama di Pengaturan launcher).
+
+---
+
+# BUILD REPORT — Fase 6.1 (fokus D-pad terlihat di SEMUA layar + audit scroll) — v0.6.1
+
+Tanggal: 2026-11-01 · Status akhir: **BUILD SUCCESSFUL — APK 0.6.1 jadi, badging + sertifikat + quotes terverifikasi.**
+Konteks: dua laporan user atas 0.6.0 di TV asli: (1) tombol-tombol **tidak punya pembeda visual saat fokus** pas navigasi remote atas/bawah — paling parah di layar Cek Pembaruan pas mau update; (2) **list Pengaturan tidak bisa scroll** — item terbawah tidak terjangkau di TV 768p. Status di bawah jujur seperti biasa: semua *compile-verified dari VM*; konfirmasi visual di TV menunggu retest user. Tidak ada dependensi baru; tidak ada git ops di fase ini (parent yang pegang).
+
+## Hasil akhir
+
+| Item | Nilai |
+|---|---|
+| APK (deliverable) | `~/workspace/smart-tv-launcher/MotTvLauncher-0.6.1-debug.apk` |
+| Ukuran | 9.577.147 byte (±9,6 MB — praktis sama dengan 0.6.0) |
+| applicationId | `com.mottv.launcher` |
+| versionName / versionCode | **0.6.1 / 10** (dari `aapt dump badging`) |
+| minSdk / targetSdk / compileSdk | 26 / 34 / 34 (badging) |
+| Sertifikat penanda tangan | SHA-256 **dda6fa9827737d4b447a3caa470fbec0838d534679f4579a0195ae116fe096d4** — identik keystore permanen → **0.6.1 bisa diinstal menimpa 0.6.0 TANPA uninstall** |
+| Sanity | `assets/quotes.json` md5 identik dengan `quotes/quotes.json` (**1600905b7551b553a97dd09fc0020849**) — pool tidak berubah |
+
+Perintah build hijau sekali jalan: pola offline persis fase 1–6 (`assembleDebug --offline --no-daemon`, 17 task dieksekusi). Satu-satunya warning: `FLAG_IS_GAME` deprecated di GamesActivity — sudah ada sejak fase 1, tidak berpengaruh.
+
+## Diagnosis (kenapa fokus tidak terlihat)
+
+Pola lama app ini: sebagian kontrol menukar background lewat `OnFocusChangeListener` manual ke `pill_on` (putih solid), tapi polanya **tidak pernah diterapkan ke layar-layar baru fase 5–6** — `UpdateActivity` dan `HomeOverrideActivity` hanya memasang click listener, background statis `pill_gold`/`pill_bg`, jadi fokus benar-benar tidak terlihat di sana (persis layar yang dilaporkan user). Panel SSL punya swap manual sendiri, dialog long-press memakai list bawaan AlertDialog (tema AppCompat terang → highlight fokus pucat), dan baris Pengaturan memakai shape polos. Fase ini mengganti SEMUA pola itu dengan **satu sistem bersama**, bukan tambal per layar.
+
+## Sistem fokus bersama (baru)
+
+**Selector drawable** (`res/drawable/mot_focus_*.xml`) — state default-nya **identik piksel** dengan tampang lama (aturan brief: unfocused tidak berubah), state fokus menambah fill lebih terang + stroke 3dp, state pressed ada sendiri:
+
+| Drawable | Default (= tampang lama) | Fokus | Pressed |
+|---|---|---|---|
+| `mot_focus_pill` | `pill_bg` (translusen, radius 999) | fill #40FFFFFF + stroke 3dp putih | gradasi emas |
+| `mot_focus_gold` | `pill_gold` (gradasi emas) | gradasi sama + stroke 3dp putih | gradasi emas lebih dalam |
+| `mot_focus_white` | `pill_on` (putih solid) | putih + stroke 3dp **emas** | abu terang |
+| `mot_focus_row` | `menu_item` (#1AFFFFFF, radius 11) | fill #36FFFFFF + stroke 3dp putih | emas translusen |
+
+Satu-satunya deviasi sadar: `mot_focus_white` memakai ring **emas**, bukan putih — stroke putih di atas fill putih tidak akan terlihat; ring emas justru paling kontras di atas putih. Dipakai untuk kontrol yang default-nya memang putih: pill tanggal terpilih & chip terpilih (Bola/Search/Hasil) dan tombol Putar/Jeda player.
+
+**`FocusFx.kt`** — fungsi `View.focusFx(scale)` memasang animasi scale (120 ms) + `translationZ` saat fokus berubah. Sengaja **bukan** `bringToFront()`: itu mengurut ulang anak LinearLayout (baris bisa tertukar posisi); translationZ hanya mengubah urutan gambar. Skala dipakai di tombol/pill/chip/key/tombol player (1.04–1.08); **baris full-width tidak diskala** (akan meleber melewati tepi layar) — sinyal fokusnya murni stroke + brighten dari selector. Konsekuensi arsitektural: semua listener swap-background manual lama **dihapus** (slot listener tunggal sekarang milik FocusFx di kontrol yang diskala; sisanya murni drawable).
+
+## Sweep per layar (kontrol → perlakuan)
+
+- **UpdateActivity (Cek Pembaruan)** — titik nyeri yang dilaporkan: `updateAction` → `mot_focus_gold` + focusFx 1.05, `updateBack` → `mot_focus_pill` + focusFx. Listener terpasang sekali di onCreate dan **bertahan di semua state tombol** (Periksa Pembaruan / Memeriksa… / Periksa Lagi / Unduh & Pasang / Beri Izin Instal / Pasang Sekarang) karena yang berubah hanya teks & enabled. Fokus awal sudah ada (`requestFocus`) sejak fase 5.
+- **HomeOverrideActivity** — ketiga kontrol (Aktifkan di Setelan TV = gold selector, Override ON/OFF + Kembali = pill selector) + focusFx 1.05. Fokus awal sudah ada di tombol Aktifkan.
+- **Pengaturan (SettingsActivity)** — style `SettingsMenuItem` sekarang menunjuk `mot_focus_row`; listener di `menuItem()` disisakan **hanya** untuk mengganti teks hint kanan (tidak lagi menyentuh background/warna teks — teks emas "Pengaturan TV (Android) ↗" tetap emas saat fokus, kontras cukup di atas fill fokus yang translusen).
+- **PlaceholderActivity / Tentang / pesan** — `msgButton` → `mot_focus_gold` + focusFx.
+- **BackgroundActivity** — baris opsi & mode memakai style `SettingsOptionRow` → otomatis `mot_focus_row`; fungsi `focusStyle()` lama dihapus (penanda "✓" tetap cara menandai pilihan aktif). **Slider kegelapan**: container-nya sekarang memakai `mot_focus_row` sebagai background SeekBar (+ padding) → fokus pada slider menampakan ring yang sama.
+- **BrowserActivity** — tombol "Buka" → `mot_focus_gold` + focusFx; kolom URL → `mot_focus_row` (stroke saat fokus). **Panel SSL**: `styleSslButton` ditulis ulang — background selector bersama (Retry = gold, Tetap Buka/Kembali = pill) + focusFx; fokus awal ke "Coba Lagi" sudah ada sejak 4.3.
+- **SearchActivity** — backBtn/micBtn/searchBtn: selector di layout + focusFx; fungsi `styleFocusablePill` dihapus. **Chip kategori**: terpilih = `mot_focus_white` (teks gelap statis), tidak terpilih = `mot_focus_pill`, + focusFx. **Keyboard on-screen**: huruf = `mot_focus_row`, tombol "Cari" emas = `mot_focus_gold`, + focusFx 1.06 (sebelumnya swap manual). **Recent searches**: pill → `mot_focus_pill` + focusFx.
+- **ResultsActivity** — backBtn + chip kategori pola sama seperti Search; **kartu hasil**: background di `item_result.xml` diganti `mot_focus_row`, listener swap di adapter dihapus (sekalian menghilangkan bug laten rebind RecyclerView yang menukar background). Baris full-width → tanpa skala.
+- **BolaActivity** — pill tanggal: terpilih = `mot_focus_white`, tidak = `mot_focus_pill` (ditentukan `refreshDatePills()`; fokus tidak lagi mewarnai teks); tombol kalender (datePick) → `mot_focus_gold` + focusFx; backBtn → pill selector + focusFx; **chip liga**: terpilih = white selector, tidak = pill selector, + focusFx; **baris match**: background `mot_focus_row` (menggantikan swap manual ke `tile_focus_border`), tanpa skala.
+- **CalendarActivity** — 5 tombol nav → `mot_focus_pill` + focusFx; **sel tanggal**: terpilih = `mot_focus_gold` (sebelumnya sel terpilih **tidak berubah sama sekali** saat fokus — celah nyata yang sekarang tertutup oleh stroke putih), hari ini & hari biasa = `mot_focus_row` (teks emas hari ini dipertahankan), + focusFx 1.08.
+- **SholatActivity** — "Ganti Kota" → `mot_focus_gold` + focusFx (teks gelap statis dari layout); **baris daftar kota** → `mot_focus_row` di adapter, teks tetap putih, tanpa skala.
+- **PlayerActivity** — tombol ⏮/−10/+10/⏭/subtitel → `mot_focus_pill` + focusFx 1.06 (helper `wireButton`); Putar/Jeda → `mot_focus_white` (unfocused tetap putih seperti lama; fokus = ring emas); "Buka di Browser" → `mot_focus_gold`; tombol tutup error → pill selector. Semua dari layout, listener swap dihapus.
+- **Beranda (MainActivity)** — 4 pill atas (Bola/Sholat/Pengaturan/Semua App) → `mot_focus_pill` + focusFx, menggantikan swap manual di `setupPill`.
+- **Dialog long-press (AppActions)** — ditulis ulang: bukan lagi `AlertDialog.setItems` (list tema terang, highlight fokus nyaris tak terlihat di TV). Sekarang panel custom gelap (`mot_dialog_bg` dipasang sebagai background window dialog setelah `show()`): judul sendiri + satu baris fokusable per aksi, tiap baris `mot_focus_row` + focusFx 1.01; baris pertama langsung `requestFocus()`. Isi & syarat menu tidak berubah (Copot tetap disembunyikan untuk paket sendiri & Play Store).
+
+## Pengecualian yang disengaja (hasil grep audit akhir)
+
+- **Tile Beranda / Games / Semua App** — sudah punya perlakuan fokus sendiri yang bagus (foreground `tile_focus_border` + scale 1.05–1.06, terverifikasi di kode) → tidak diubah, sesuai brief.
+- **SeekBar player** — memang `focusable="false"` **by design**: ia indikator progres murni; seek dilakukan tombol ±10 yang fokusable (kontrol tampil) atau tombol kiri/kanan remote (kontrol tersembunyi). Menjadikannya fokusable akan mengubah skema kontrol player — di luar scope.
+- **Label dekoratif non-fokusable** tetap memakai drawable lama (default-nya identik): pill "Beranda" (indikator halaman aktif) & "OK — Buka" di Beranda, `countPill` di Games/Semua App, `selectedLabel` di Kalender, kartu catatan rilis (Update) & kartu penjelasan (HomeOverride), pill platform di dalam baris match Bola. Tidak satu pun bisa menerima fokus, jadi tidak ada yang perlu dibedakan.
+- **Kolom teks (EditText)** memakai `mot_focus_row` — stroke fokus membantu navigasi D-pad; kursor teks tetap indikator utama saat mengetik.
+
+## Scroll audit (viewport desain: 1280×720 logis / TV 768p)
+
+| Layar | Status sebelum | Perlakuan 6.1 |
+|---|---|---|
+| Pengaturan (menu utama) | **TIDAK scrollable** — 8 baris + hint; item bawah (Tentang, Pengaturan TV) terpotong/tidak terjangkau di 720p | **Dibungkus ScrollView** (fillViewport, tanpa scrollbar): kolom menu 330dp jadi area scroll, judul tetap di luar; padding bawah 16dp di dalam konten supaya baris terakhir tidak mepet tepi. Baris fokusable → ScrollView menggeser otomatis sampai baris fokus tampil penuh |
+| Cek Pembaruan (Update) | Konten ter-center statis; kartu catatan rilis (maks 8 baris) + status panjang bisa overflow | **Dibungkus ScrollView** fillViewport — konten pendek tetap ter-center persis seperti sebelumnya; konten tinggi scroll mengikuti fokus; padding bawah 32dp |
+| Tombol Home (HomeOverride) | Statis; kartu penjelasan panjang + status + 3 tombol mepet batas 720p | **Dibungkus ScrollView** fillViewport, pola sama seperti Update |
+| Placeholder (Tentang/Bahasa/Lokasi Sholat) | Statis; body teks arbitrer (Tentang cukup panjang) bisa lari dari layar | **Dibungkus ScrollView** fillViewport di level layout bersama (`activity_message`) → semua layar Placeholder ikut sembuh |
+| Background | Statis; total konten (5 opsi + slider + mode + catatan) ≈ 560dp — muat, tapi mepet | **Dibungkus ScrollView** fillViewport untuk keamanan; padding bawah dinaikkan ke 38dp |
+| Jadwal Bola | Sudah aman — grup match di dalam ScrollView; chip RecyclerView horizontal | Diverifikasi, tidak diubah |
+| Jadwal Sholat | Sudah aman — ScrollView sejak fase 3 (anti-kepotong); picker kota RecyclerView | Diverifikasi, tidak diubah |
+| Hasil Pencarian | Sudah aman — RecyclerView | Diverifikasi, tidak diubah |
+| Games / Semua App | Sudah aman — RecyclerView grid | Diverifikasi, tidak diubah |
+| Pencarian | Layout tetap, total konten terukur ≈ 470dp < 720p (header + input + chip + keyboard 4 baris + recents) | Diverifikasi muat, tidak diubah |
+| Kalender Bola | Layout tetap, grid bulan terburuk 6 baris ≈ di bawah 720p bersama header/nav | Diverifikasi muat, tidak diubah |
+| Beranda | Layout tetap yang memang didesain per-viewport TV (sudah diuji user di semua fase) | Tidak diubah |
+| Browser | WebView mengisi sisa layar & scroll sendiri; kartu panel SSL ≈ 320dp | Diverifikasi aman, tidak diubah |
+| Player | Overlay di atas video fullscreen — tidak ada konten yang bisa overflow | Tidak diubah |
+
+Catatan ScrollView + fokus: baris di dalam kelima ScrollView baru semuanya `focusable=true` (dari style/menu yang sama), dan ScrollView standar menggeser anak fokus ke dalam pandangan (`requestRectangleOnScreen`) — termasuk baris terakhir, yang kini punya bantalan padding bawah. ScrollView sendiri tidak fokusable sehingga tidak mencuri fokus.
+
+## Keterbatasan fase 6.1 (jujur)
+
+1. Semua perubahan **compile-verified dari VM**; rasa fokus (apakah stroke 3dp + skala cukup mencolok dari jarak sofa) dan perilaku auto-scroll baris terakhir hanya bisa dikonfirmasi user di TV.
+2. Dialog custom AppActions: background window diganti setelah `show()` — pola standar, tapi pewarnaan frame dialog AppCompat antar-build TV bisa berbeda; kalau di TV masih ada sisa frame terang di sekeliling panel gelap, itu kosmetik dan dilaporkan saja untuk fase berikut.
+3. `mot_focus_white` memakai ring emas (bukan putih) saat fokus — deviasi sadar dari aturan stroke putih, alasannya di atas; berlaku di pill tanggal/chip terpilih dan tombol Putar/Jeda.

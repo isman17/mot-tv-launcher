@@ -57,13 +57,9 @@ class CalendarActivity : AppCompatActivity() {
     }
 
     private fun styleNav(tv: TextView, onClick: () -> Unit) {
-        tv.setOnFocusChangeListener { v, hasFocus ->
-            val t = v as TextView
-            t.background = ContextCompat.getDrawable(
-                this, if (hasFocus) R.drawable.pill_on else R.drawable.pill_bg
-            )
-            t.setTextColor(if (hasFocus) Color.parseColor("#191C22") else Color.WHITE)
-        }
+        // Fase 6.1: bg is the shared mot_focus_pill selector (layout);
+        // focusFx adds scale/lift. Replaces the old pill_on swap.
+        tv.focusFx(1.05f)
         tv.setOnClickListener { onClick() }
     }
 
@@ -93,45 +89,34 @@ class CalendarActivity : AppCompatActivity() {
                 gravity = Gravity.CENTER
                 isFocusable = true
                 isClickable = true
+                // Fase 6.1: cell backgrounds are the shared selectors —
+                // selected day = mot_focus_gold (previously the selected
+                // cell showed NO focus change at all; now its focused
+                // state adds the white stroke), other days = mot_focus_row.
+                // Text colors stay exactly as authored (gold for today).
                 when {
                     isSelected -> {
                         background = ContextCompat.getDrawable(
-                            this@CalendarActivity, R.drawable.pill_gold
+                            this@CalendarActivity, R.drawable.mot_focus_gold
                         )
                         setTextColor(Color.parseColor("#26221A"))
                         setTypeface(typeface, Typeface.BOLD)
                     }
                     isToday -> {
                         background = ContextCompat.getDrawable(
-                            this@CalendarActivity, R.drawable.menu_item
+                            this@CalendarActivity, R.drawable.mot_focus_row
                         )
                         setTextColor(Color.parseColor("#FFD166"))
                         setTypeface(typeface, Typeface.BOLD)
                     }
                     else -> {
                         background = ContextCompat.getDrawable(
-                            this@CalendarActivity, R.drawable.menu_item
+                            this@CalendarActivity, R.drawable.mot_focus_row
                         )
                         setTextColor(Color.WHITE)
                     }
                 }
-                setOnFocusChangeListener { v, hasFocus ->
-                    val t = v as TextView
-                    if (date == selected) return@setOnFocusChangeListener
-                    if (hasFocus) {
-                        t.background = ContextCompat.getDrawable(
-                            this@CalendarActivity, R.drawable.pill_on
-                        )
-                        t.setTextColor(Color.parseColor("#191C22"))
-                    } else {
-                        t.background = ContextCompat.getDrawable(
-                            this@CalendarActivity, R.drawable.menu_item
-                        )
-                        t.setTextColor(
-                            if (date == today) Color.parseColor("#FFD166") else Color.WHITE
-                        )
-                    }
-                }
+                focusFx(1.08f)
                 setOnClickListener {
                     setResult(
                         Activity.RESULT_OK,
