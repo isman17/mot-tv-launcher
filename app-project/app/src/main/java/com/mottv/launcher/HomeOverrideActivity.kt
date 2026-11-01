@@ -9,6 +9,8 @@ import android.view.accessibility.AccessibilityManager
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import java.text.SimpleDateFormat
+import java.util.Locale
 
 /**
  * "Tombol Home Langsung ke Sini" (Fase 6) — control screen for the
@@ -24,6 +26,10 @@ class HomeOverrideActivity : AppCompatActivity() {
 
     private lateinit var statusText: TextView
     private lateinit var toggleBtn: TextView
+    private lateinit var diagConnected: TextView
+    private lateinit var diagCounts: TextView
+    private lateinit var diagError: TextView
+    private lateinit var diagInterpretation: TextView
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -32,6 +38,10 @@ class HomeOverrideActivity : AppCompatActivity() {
 
         statusText = findViewById(R.id.homeOverrideStatus)
         toggleBtn = findViewById(R.id.homeOverrideToggle)
+        diagConnected = findViewById(R.id.homeDiagConnected)
+        diagCounts = findViewById(R.id.homeDiagCounts)
+        diagError = findViewById(R.id.homeDiagError)
+        diagInterpretation = findViewById(R.id.homeDiagInterpretation)
 
         // Focus visibility (fase 6.1): backgrounds are the mot_focus_*
         // selectors in the layout; focusFx adds scale/lift on all three.
@@ -68,6 +78,47 @@ class HomeOverrideActivity : AppCompatActivity() {
             else -> "Status: BELUM AKTIF"
         }
         toggleBtn.text = if (on) "Override: ON" else "Override: OFF"
+        refreshDiary()
+    }
+
+    /** "Diagnostik Layanan" card (Fase 6.2): render the [ServiceDiary]
+     *  so a silently-reverting enable toggle stops being a mystery —
+     *  did the system ever bind the service, did it let go instantly,
+     *  and did the service itself record an error? */
+    private fun refreshDiary() {
+        val s = ServiceDiary.snapshot(this)
+
+        diagConnected.text = if (s.connectedCount > 0) {
+            "Terhubung terakhir: ${formatTime(s.connectedAt)}"
+        } else {
+            "Belum pernah terhubung"
+        }
+
+        val releasedAt = maxOf(s.unboundAt, s.destroyedAt)
+        diagCounts.text = "Jumlah terhubung: ${s.connectedCount} · Terputus terakhir: " +
+            if (releasedAt > 0L) formatTime(releasedAt) else "—"
+
+        diagError.text = if (s.errorAt > 0L) {
+            "Kesalahan terakhir: ${s.errorClass ?: "?"}: ${s.errorMessage ?: ""} @ ${formatTime(s.errorAt)}"
+        } else {
+            "Kesalahan terakhir: Tidak ada"
+        }
+
+        diagInterpretation.text = when {
+            s.connectedCount == 0 ->
+                "Layanan belum pernah dihubungkan sistem — TV menolak mengaktifkan " +
+                    "layanan ini (kemungkinan kunci 'setelan terbatas' Android untuk " +
+                    "aplikasi sideload)."
+            releasedAt > s.connectedAt && releasedAt - s.connectedAt < QUICK_RELEASE_MS ->
+                "Layanan sempat terhubung lalu dilepas sistem dengan cepat."
+            else -> "Layanan pernah terhubung normal."
+        }
+    }
+
+    private fun formatTime(ms: Long): String = try {
+        SimpleDateFormat("HH:mm:ss dd MMM", Locale("id", "ID")).format(ms)
+    } catch (e: Exception) {
+        ms.toString()
     }
 
     /** Enabled = our component appears in the system's enabled-services
@@ -117,5 +168,12 @@ class HomeOverrideActivity : AppCompatActivity() {
                 ).show()
             }
         }
+    }
+
+    companion object {
+        /** A release (unbind/destroy) landing within this window after
+         *  the latest connect counts as "dilepas sistem dengan cepat"
+         *  in the diagnostic interpretation (Fase 6.2). */
+        private const val QUICK_RELEASE_MS = 10_000L
     }
 }

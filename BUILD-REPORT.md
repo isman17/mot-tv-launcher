@@ -602,3 +602,61 @@ Catatan ScrollView + fokus: baris di dalam kelima ScrollView baru semuanya `focu
 1. Semua perubahan **compile-verified dari VM**; rasa fokus (apakah stroke 3dp + skala cukup mencolok dari jarak sofa) dan perilaku auto-scroll baris terakhir hanya bisa dikonfirmasi user di TV.
 2. Dialog custom AppActions: background window diganti setelah `show()` — pola standar, tapi pewarnaan frame dialog AppCompat antar-build TV bisa berbeda; kalau di TV masih ada sisa frame terang di sekeliling panel gelap, itu kosmetik dan dilaporkan saja untuk fase berikut.
 3. `mot_focus_white` memakai ring emas (bukan putih) saat fokus — deviasi sadar dari aturan stroke putih, alasannya di atas; berlaku di pill tanggal/chip terpilih dan tombol Putar/Jeda.
+
+---
+
+# BUILD REPORT — Fase 6.2 (rilis DIAGNOSTIK: buku harian lifecycle layanan aksesibilitas) — v0.6.2
+
+Tanggal: 2026-11-01 · Status akhir: **BUILD SUCCESSFUL — APK 0.6.2 jadi, badging + sertifikat + quotes terverifikasi.**
+Konteks: di TV user (TCL 32S51K, Android 14), mengaktifkan **"Mot TV — Tombol Home"** di Setelan Aksesibilitas **selalu mental balik ke OFF** tepat sesudah OK — tanpa pesan apa pun. Yang sudah diverifikasi SEBELUM fase ini: deklarasi manifest benar (`exported=true`, `BIND_ACCESSIBILITY_SERVICE`, config XML valid); kode layanan tidak punya kandidat crash (onServiceConnected trivial, semua handler try/catch); user sudah menyingkirkan app-stopped-state (buka app dulu) dan sudah coba restart TV; build TvSettings TCL ini **tidak menyediakan entri "Izinkan setelan terbatas" di mana pun** di App info. Pertanyaan yang belum terjawab dan fase ini dirancang untuk menjawabnya: **apakah sistem PERNAH me-bind layanan ini sama sekali?** Fase ini **rilis diagnostik murni — logika override TIDAK berubah sama sekali**; yang ditambah hanya visibilitas.
+
+## Hasil akhir
+
+| Item | Nilai |
+|---|---|
+| APK (deliverable) | `~/workspace/smart-tv-launcher/MotTvLauncher-0.6.2-debug.apk` |
+| Ukuran | 9.582.371 byte (±9,6 MB — praktis sama dengan 0.6.1; tidak ada dependensi baru) |
+| applicationId | `com.mottv.launcher` |
+| versionName / versionCode | **0.6.2 / 11** (dari `aapt dump badging`) |
+| minSdk / targetSdk / compileSdk | 26 / 34 / 34 (badging) |
+| Sertifikat penanda tangan | SHA-256 **dda6fa9827737d4b447a3caa470fbec0838d534679f4579a0195ae116fe096d4** — identik keystore permanen → **0.6.2 bisa diinstal menimpa 0.6.1 TANPA uninstall** |
+| Sanity | `assets/quotes.json` di dalam APK md5 **1600905b7551b553a97dd09fc0020849**, identik pool sumber — tidak berubah |
+
+Perintah build hijau: pola offline persis fase 1–6.1 (`assembleDebug --offline --no-daemon`, JDK tools, GRADLE_OPTS heap; BUILD SUCCESSFUL, exit 0).
+
+## Yang diimplementasikan
+
+**1. `ServiceDiary.kt` (baru)** — object penyimpan buku harian lifecycle, backed by SharedPreferences file `service_diary`. Setiap entri = timestamp wall-clock (millis) + counter kumulatif:
+- `created_at/count` ← `HomeInterceptService.onCreate`
+- `connected_at/count` ← `onServiceConnected` (dicap SEBELUM logika lain di callback itu — fakta "baris ini pernah jalan" adalah data diagnostik terpenting)
+- `unbound_at/count` ← `onUnbind` (mengembalikan nilai super apa adanya)
+- `destroyed_at/count` ← `onDestroy`
+- `interrupt_count` ← `onInterrupt`
+- `last_error` (class sederhana + message + timestamp) ← ditulis oleh **SETIAP catch block** di layanan sebelum exception ditelan: keempat situs terverifikasi via grep — `onKeyEvent`, `onAccessibilityEvent`, `onServiceConnected`, `launchHome` (masing-masing 1 panggilan `ServiceDiary.recordError`).
+Semua penulisan diary dibungkus try/catch di dalam `ServiceDiary` sendiri — diary **tidak bisa melempar** balik ke kode layanan; `snapshot()` yang gagal pun jatuh ke Snapshot kosong.
+
+**2. Wiring di `HomeInterceptService`** — hanya penambahan stamp + recordError di atas; urutan & isi logika override (filter KEYCODE_HOME, jaring pengaman window, debounce, grace window) **byte-for-byte sama secara perilaku** dengan 6.0/6.1.
+
+**3. Kartu "Diagnostik Layanan" di `HomeOverrideActivity`** — LinearLayout bergaya kartu yang sama (`menu_item`) disisipkan di layout `activity_home_override` tepat di bawah kartu penjelasan, di dalam ScrollView yang sudah ada (jadi ikut aman dari audit scroll 6.1); di-refresh tiap `refreshStatus()` (onCreate + onResume — termasuk tepat sepulang user dari halaman Setelan Aksesibilitas). Isinya:
+- "Terhubung terakhir: HH:mm:ss dd MMM" (format `SimpleDateFormat` locale id-ID) — atau "Belum pernah terhubung"
+- "Jumlah terhubung: N · Terputus terakhir: <waktu>" (terputus = yang terakhir dari unbind/destroy)
+- "Kesalahan terakhir: <class>: <message> @ <waktu>" — atau "Kesalahan terakhir: Tidak ada"
+- **Satu baris interpretasi** (emas) yang dihitung dari data:
+  - connections == 0 → *"Layanan belum pernah dihubungkan sistem — TV menolak mengaktifkan layanan ini (kemungkinan kunci 'setelan terbatas' Android untuk aplikasi sideload)."*
+  - terputus terakhir ≤10 detik sesudah connect terakhir → *"Layanan sempat terhubung lalu dilepas sistem dengan cepat."*
+  - selain itu → *"Layanan pernah terhubung normal."*
+
+## Cara membaca hasilnya di TV (prosedur untuk user)
+
+1. Instal 0.6.2 (timpa langsung), coba aktifkan **Mot TV — Tombol Home** seperti biasa (dan biarkan mental seperti biasanya).
+2. Buka Pengaturan launcher → **Tombol Home Langsung ke Sini** → baca kartu **Diagnostik Layanan** paling bawah.
+3. Laporkan tiga hal: jumlah terhubung, kesalahan terakhir (kalau ada), dan baris interpretasinya. Tiga skenario yang terbedakan bersih:
+   - **0 connect + tidak ada error** → sistem tidak pernah me-bind: penolakan murni di sisi TV (kunci setelan terbatas tanpa UI, atau kebijakan TvSettings TCL) → jalan keluar berikutnya adalah keputusan user (mis. izinkan lewat jalur lain), bukan bug app.
+   - **connect > 0 lalu terputus <10 dtk** → sistem me-bind lalu melepas: kandidatnya konflik kebijakan layanan (mis. layanan dianggap crash oleh framework di luar catch kita, atau TCL mematikan layanan pihak ketiga) → data timestamp-nya yang bicara.
+   - **error tercatat** → bug nyata di pihak kami dengan nama class-nya; perbaiki berbasis bukti itu.
+
+## Keterbatasan fase 6.2 (jujur)
+
+1. Rilis ini **tidak memperbaiki** penolakan aktivasi — ia membuat penolakan itu *terlihat*. Klaim apa pun soal penyebab sebelum data diary di TV terbaca adalah tebakan; tiga skenario di atas disiapkan supaya laporan user berikutnya langsung menunjuk penyebabnya.
+2. Semua perubahan compile-verified dari VM (build hijau, badging, sertifikat, md5 quotes, grep wiring) — perilaku diary di perangkat menunggu uji TV user, seperti fase-fase sebelumnya.
+3. Diary bersifat kumulatif lintas versi (SharedPreferences tidak ter-reset oleh update timpa) — angka "jumlah terhubung" mencakup percobaan dari sesi-sesi sebelumnya sejak 0.6.2 terinstal; timestamp "terakhir" adalah penunjuk utama untuk percobaan terbaru.

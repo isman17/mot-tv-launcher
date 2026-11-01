@@ -38,6 +38,26 @@ class HomeInterceptService : AccessibilityService() {
     @Volatile
     private var lastSelfLaunchMs = 0L
 
+    // --- Lifecycle diary (Fase 6.2, diagnostic only) -------------------
+    // On the user's TV the enable toggle reverts silently; these stamps
+    // are how we find out whether the system ever binds this service.
+    // ServiceDiary writes can never throw (see its own guards).
+
+    override fun onCreate() {
+        super.onCreate()
+        ServiceDiary.recordCreated(this)
+    }
+
+    override fun onUnbind(intent: Intent?): Boolean {
+        ServiceDiary.recordUnbound(this)
+        return super.onUnbind(intent)
+    }
+
+    override fun onDestroy() {
+        ServiceDiary.recordDestroyed(this)
+        super.onDestroy()
+    }
+
     override fun onKeyEvent(event: KeyEvent?): Boolean {
         try {
             if (event != null &&
@@ -49,6 +69,7 @@ class HomeInterceptService : AccessibilityService() {
                 return true
             }
         } catch (e: Exception) {
+            ServiceDiary.recordError(this, e)
             // Fall through to the system's own handling.
         }
         return super.onKeyEvent(event)
@@ -68,23 +89,30 @@ class HomeInterceptService : AccessibilityService() {
             lastBounceMs = now
             launchHome()
         } catch (e: Exception) {
+            ServiceDiary.recordError(this, e)
             // Safety net must never crash the service.
         }
     }
 
     override fun onInterrupt() {
-        // Nothing to interrupt — the service renders no feedback.
+        // Nothing to interrupt — the service renders no feedback. The
+        // diary still counts it (Fase 6.2): an interrupt storm would be
+        // a clue the system keeps rebinding us.
+        ServiceDiary.recordInterrupt(this)
     }
 
     override fun onServiceConnected() {
         try {
             super.onServiceConnected()
+            // Diary stamp first (Fase 6.2): this line running at all is
+            // the single most important diagnostic fact on the user's TV.
+            ServiceDiary.recordConnected(this)
             // Grace window right after (re)connect so a stale stock-home
             // window event can't bounce the user while they are still
             // sitting in the accessibility settings screen.
             lastSelfLaunchMs = SystemClock.uptimeMillis()
         } catch (e: Exception) {
-            // no-op
+            ServiceDiary.recordError(this, e)
         }
     }
 
@@ -104,6 +132,7 @@ class HomeInterceptService : AccessibilityService() {
             }
             startActivity(intent)
         } catch (e: Exception) {
+            ServiceDiary.recordError(this, e)
             // If Android refuses the start, stay silent — the next Home
             // press retries, and the stock home keeps working meanwhile.
         }
