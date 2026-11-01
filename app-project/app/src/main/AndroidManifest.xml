@@ -121,5 +121,30 @@
             android:name=".UpdateActivity"
             android:exported="false"
             android:screenOrientation="landscape" />
+        <activity
+            android:name=".HomeOverrideActivity"
+            android:exported="false"
+            android:screenOrientation="landscape" />
+
+        <!-- Home-button override (Fase 6): Projectivy-style interception.
+             Google TV holds the stock launcher at top Home priority, so
+             the normal default-home route does not stick; this service —
+             enabled by the USER in TV accessibility settings, removable
+             there any time — watches only for the Home button (and the
+             stock home surfacing) and opens our MainActivity instead.
+             Config keeps canRetrieveWindowContent=false: it cannot read
+             screen content. -->
+        <service
+            android:name=".HomeInterceptService"
+            android:exported="true"
+            android:label="@string/home_service_label"
+            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
+            <intent-filter>
+                <action android:name="android.accessibilityservice.AccessibilityService" />
+            </intent-filter>
+            <meta-data
+                android:name="android.accessibilityservice"
+                android:resource="@xml/home_accessibility_config" />
+        </service>
     </application>
 </manifest>

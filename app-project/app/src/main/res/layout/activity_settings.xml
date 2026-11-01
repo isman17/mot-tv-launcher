@@ -65,6 +65,11 @@
                     android:text="Cek Pembaruan" />
 
                 <TextView
+                    android:id="@+id/menuHomeOverride"
+                    style="@style/SettingsMenuItem"
+                    android:text="Tombol Home Langsung ke Sini" />
+
+                <TextView
                     android:id="@+id/menuDefaultHome"
                     style="@style/SettingsMenuItem"
                     android:text="Jadikan Launcher Default" />

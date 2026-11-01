@@ -1,4 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Mot TV Launcher</string>
+
+    <!-- Home-button override (Fase 6): accessibility service identity.
+         The description is shown by the system on the enable screen, so
+         it states plainly what the service does and does not do. -->
+    <string name="home_service_label">Mot TV — Tombol Home</string>
+    <string name="home_service_desc">Hanya mengawasi tombol Home (dan layar Beranda bawaan) lalu membuka Mot TV Launcher. Tidak membaca isi layar dan tidak merekam apa pun yang kamu ketik atau tonton.</string>
 </resources>

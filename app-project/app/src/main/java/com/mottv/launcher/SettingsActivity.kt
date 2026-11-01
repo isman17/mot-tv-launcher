@@ -58,6 +58,9 @@ class SettingsActivity : AppCompatActivity() {
         menuItem(R.id.menuUpdate, "Periksa versi terbaru Mot TV Launcher dari GitHub Releases proyek ini, unduh, dan pasang dari sini. Versi kamu sekarang: $appVersion.") {
             startActivity(Intent(this, UpdateActivity::class.java))
         }
+        menuItem(R.id.menuHomeOverride, "Google TV menahan launcher bawaan di tombol Home, jadi cara default biasa tidak mempan di TV ini. Layar ini menjelaskan override tombol Home lewat layanan aksesibilitas (hanya mengawasi tombol Home, tidak membaca isi layar), menampilkan statusnya, dan menyediakan saklar matinya.") {
+            startActivity(Intent(this, HomeOverrideActivity::class.java))
+        }
         menuItem(R.id.menuDefaultHome, "Pilih Mot TV Launcher sebagai aplikasi Beranda — tombol ini membuka langsung layar \"Aplikasi Beranda\" bawaan sistem, tinggal pilih Mot TV Launcher di sana.") {
             // Straight to the system's own Home-app chooser — no more
             // hunting through the TV's settings menus for the stock

@@ -463,3 +463,51 @@ Perintah build: pola offline persis fase 1–4.3 (`assembleDebug --offline --no-
 - **Perilaku**: tap → `Intent(Settings.ACTION_HOME_SETTINGS)` + `FLAG_ACTIVITY_NEW_TASK` — layar pilihan **Home app bawaan sistem** terbuka langsung, user tinggal memilih Mot TV Launcher di sana. Ini menghilangkan friksi yang memicu item ini: user tidak perlu lagi berburu entri launcher bawaan di dalam menu Pengaturan TV yang berlapis-lapis.
 - **Fallback jujur berjenjang**: `ActivityNotFoundException` dari intent utama → jatuh ke `Intent(Settings.ACTION_SETTINGS)` (Pengaturan sistem umum); kalau itu pun gagal → toast panjang berisi jalur manual lengkapnya (Pengaturan TV → Aplikasi → Aplikasi default → Aplikasi Beranda). Tidak ada perilaku lain yang diubah; app tidak menyentuh status default apa pun sendiri — keputusan tetap dibuat user di layar sistem.
 - **Verifikasi rebuild**: BUILD SUCCESSFUL; badging tetap **0.5.0 / vc8 / minSdk 26**; sertifikat tetap **dda6fa98…** (menimpa 0.4.3 — dan build 0.5.0 sebelumnya — tanpa uninstall); md5 `quotes.json` tetap **1600905b…**. Ukuran APK final 9.720.269 byte (tabel Hasil akhir di atas sudah memakai angka rebuild ini). Perilaku runtime (layar Home-settings di TCL user benar-benar terdaftar & terbuka) tetap menunggu retest user di TV, seperti item fase 5 lainnya.
+
+
+---
+
+# BUILD REPORT — Fase 6 (override tombol Home ala Projectivy) — v0.6.0
+
+Tanggal: 2026-11-01 · Status akhir: **BUILD SUCCESSFUL — APK 0.6.0 jadi, badging + sertifikat + quotes + manifest layanan terverifikasi.**
+Konteks: di TV user (TCL Google TV, Android 14) rute default-home biasa **gagal secara struktural** — launcherx bawaan memegang prioritas Home tertinggi, chooser tombol Home tidak pernah muncul, dan pilihan lewat ACTION_HOME_SETTINGS (tombol fase 5) tidak lengket (terverifikasi dari percobaan 0.5.0 di TV). User memilih rute override aksesibilitas ala Projectivy di chat utama. Rute ini **sepenuhnya bisa dibatalkan user** dari Setelan TV. Batasan fase ini ditegakkan persis: **tidak ada paket yang di-disable, tidak ada trik ADB** — dan "looks" tidak berubah (satu item menu Pengaturan baru + satu layar baru bergaya sama persis seperti layar Cek Pembaruan). Status di bawah tetap jujur: semua *compile-verified + isi APK terverifikasi dari VM*; perilaku runtime di TV menunggu instal 0.6.0 oleh user. **Tidak ada commit/push git di fase ini** — urusan GitHub dipegang parent.
+
+## Hasil akhir
+
+| Item | Nilai |
+|---|---|
+| APK (deliverable) | `~/workspace/smart-tv-launcher/MotTvLauncher-0.6.0-debug.apk` |
+| Ukuran | 9.576.055 byte (±9,6 MB — praktis sama dengan 0.5.0; **tidak ada dependensi pihak ketiga baru**) |
+| applicationId | `com.mottv.launcher` |
+| versionName / versionCode | **0.6.0 / 9** (dari `aapt dump badging`) |
+| minSdk / targetSdk / compileSdk | 26 / 34 / 34 (badging) |
+| Sertifikat penanda tangan | SHA-256 **dda6fa9827737d4b447a3caa470fbec0838d534679f4579a0195ae116fe096d4** — identik keystore permanen → **0.6.0 bisa diinstal menimpa 0.5.0 TANPA uninstall** |
+| Komponen baru terverifikasi di manifest APK | service `com.mottv.launcher.HomeInterceptService` (permission `BIND_ACCESSIBILITY_SERVICE`, exported, intent-filter `android.accessibilityservice.AccessibilityService`, meta-data → config), activity `HomeOverrideActivity`, file `res/xml/home_accessibility_config.xml` di dalam APK |
+| Sanity | `assets/quotes.json` md5 identik dengan `quotes/quotes.json` (**1600905b7551b553a97dd09fc0020849**) — pool tidak berubah |
+
+Perintah build hijau sekali jalan: pola offline persis fase 1–5 (`assembleDebug --offline --no-daemon`, 15 task dieksekusi, tanpa loop fetch — tidak ada dependensi baru).
+
+## Cara kerja override
+
+**`HomeInterceptService : AccessibilityService`** — dua jalur, keduanya tunduk pada saklar master yang sama:
+
+1. **Jalur utama — filter tombol** (`onKeyEvent`): KEYCODE_HOME (ACTION_DOWN) dikonsumsi (return true) dan dijawab dengan membuka `MainActivity` sendiri (intent eksplisit per-komponen, `FLAG_ACTIVITY_NEW_TASK | FLAG_ACTIVITY_REORDER_TO_FRONT` — MainActivity memang singleTask, jadi ia naik ke depan, bukan ditumpuk). Tombol lain selalu diteruskan ke `super`.
+2. **Jaring pengaman — event jendela** (`onAccessibilityEvent`, hanya `TYPE_WINDOW_STATE_CHANGED`): bila paket yang tampil di depan adalah **`com.google.android.apps.tv.launcherx`** atau **`com.google.android.tungsten.setupwraith`** (keduanya app khusus-Home, jadi kemunculannya = user sedang di home bawaan), bounce ke MainActivity. Jalur ini ada karena sebagian build Google TV tidak pernah mengantarkan KEYCODE_HOME ke filter tombol. **Debounce keras**: maks 1 bounce per **3 detik**; tidak pernah bounce bila event tiba **<1,5 detik** setelah kita sendiri membuka MainActivity (timestamp dicatat *sebelum* startActivity, jadi event balapan dari peluncuran sendiri dikenali); tidak pernah bounce untuk paket sendiri. `onServiceConnected` juga menyemai jendela tenggang 1,5 detik yang sama supaya event basi tidak memantulkan user yang masih duduk di layar aksesibilitas. `onInterrupt` no-op.
+
+**Keamanan & kejujuran layanan**: seluruh badan handler dibungkus try/catch — layanan aksesibilitas yang crash-loop tidak bisa diterima, jadi kegagalan apa pun = diam (Home bawaan tetap bekerja seperti biasa). Konfigurasi (`res/xml/home_accessibility_config.xml`) sengaja minim kuasa: `canRequestFilterKeyEvents="true"`, **`canRetrieveWindowContent="false"`** (layanan secara teknis **tidak bisa** membaca isi layar), eventTypes hanya `typeWindowStateChanged`, flag hanya `flagRequestFilterKeyEvents`, notificationTimeout 100. Label + deskripsi adalah **resource string** (`home_service_label` "Mot TV — Tombol Home", `home_service_desc`) yang tampil di layar pengaktifan sistem — isinya menyatakan polos apa yang diawasi dan apa yang tidak.
+
+**Saklar master** (`HomeOverrideStore`): boolean `home_override` di SharedPreferences, **default ON** (user yang repot-repot mengaktifkan layanan memang datang untuk ini), dibaca segar oleh layanan pada **setiap** event — saklar di Pengaturan berlaku seketika tanpa restart layanan. OFF = semua event lewat utuh tak tersentuh.
+
+## UI Pengaturan — "Tombol Home Langsung ke Sini"
+
+- Item menu baru di Pengaturan, persis **di atas** "Jadikan Launcher Default" (item lama itu **dipertahankan** sebagai alternatif), membuka layar baru **`HomeOverrideActivity`** — bahasa visual identik dengan layar Cek Pembaruan fase 5 (background sama, judul besar, teks emas, kartu penjelasan, tombol pill).
+- **Status dihitung live setiap onResume** (termasuk sepulang dari Setelan TV): layanan dianggap aktif bila komponen kita muncul di `Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES` (dibandingkan per-komponen hasil unflatten) **atau** di daftar `AccessibilityManager.getEnabledAccessibilityServiceList` — dua cara independen karena build TV bervariasi soal kecepatan refleksinya. Tiga teks status persis: "Status: AKTIF — tombol Home membuka launcher ini" (aktif + saklar ON), "Status: layanan aktif tapi override MATI" (aktif + saklar OFF), "Status: BELUM AKTIF".
+- **Tombol**: [Aktifkan di Setelan TV] → `Settings.ACTION_ACCESSIBILITY_SETTINGS` (fallback `ACTION_SETTINGS`, lalu toast jalur manual bila keduanya gagal — Android memang hanya mengizinkan USER mengaktifkan layanan aksesibilitas, app tidak bisa melakukannya sendiri); [Override: ON/OFF] → membalik saklar master di tempat.
+- **Teks penjelasan** di kartu, polos dan apa adanya: Google TV tidak mengizinkan cara biasa; cara ini memakai layanan aksesibilitas yang HANYA mengawasi tombol Home lalu membuka launcher ini — tidak membaca isi layar; aktifkan sekali di Setelan → Aksesibilitas → "Mot TV — Tombol Home"; bisa dimatikan kapan saja dari menu yang sama.
+
+## Keterbatasan fase 6 (jujur)
+
+1. Semua perubahan **compile-verified + isi APK terverifikasi dari VM**; belum ada verifikasi runtime/emulator. Yang menunggu retest user di TV: apakah TCL ini mengantarkan KEYCODE_HOME ke filter (jalur utama) atau hanya jaring pengaman yang bekerja, rasa debounce-nya saat Home ditekan dari dalam app lain, dan apakah layar aksesibilitas TCL menampilkan layanan kita dengan label/deskripsi di atas.
+2. Bounce jaring pengaman bereaksi terhadap *setiap* window-state change dari paket home bawaan — termasuk permukaan transien milik launcherx (mis. overlay pencarian suaranya). Debounce 3 detik membatasi gangguannya, dan tombol Home di permukaan itu memang seharusnya membawa user ke sini; tapi bila di TV ternyata ada permukaan launcherx yang user pakai secara sah (mis. panel notifikasi bawaan), itu kandidat penyesuaian fase berikutnya berdasarkan laporan user — bukan ditebak sekarang.
+3. Layanan aksesibilitas bisa dimatikan sistem/OEM saat app di-force-stop atau sesudah update besar TV; status di layar Pengaturan akan menampilkannya jujur sebagai BELUM AKTIF dan jalurnya tinggal diaktifkan ulang sekali.
+4. Saklar master default ON berarti perilaku override langsung hidup begitu layanan diaktifkan user di Setelan — itu memang maksudnya; mematikannya tidak butuh membuka Setelan TV (cukup dari layar yang sama di Pengaturan launcher).
