@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- FileProvider paths (phase 5 self-update): only the updates folder
+     inside the app cache is shareable, nothing else. -->
+<paths>
+    <cache-path name="updates" path="updates/" />
+</paths>

@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Tag key holding the long-press app-menu action on a tile/card
+         (phase 5), so KEYCODE_MENU can trigger the same menu. -->
+    <item name="app_menu_action" type="id" />
+</resources>

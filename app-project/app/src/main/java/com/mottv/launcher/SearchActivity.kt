@@ -1,15 +1,21 @@
 package com.mottv.launcher
 
+import android.app.Activity
+import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
 import android.graphics.Color
 import android.os.Bundle
+import android.speech.RecognizerIntent
 import android.view.Gravity
+import android.view.KeyEvent
 import android.view.inputmethod.EditorInfo
 import android.widget.EditText
 import android.widget.GridLayout
 import android.widget.LinearLayout
 import android.widget.TextView
+import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import org.json.JSONArray
@@ -25,6 +31,28 @@ class SearchActivity : AppCompatActivity() {
     private var selectedCategory: String = CATEGORIES[0]
     private val chipViews = HashMap<String, TextView>()
 
+    /**
+     * Voice search (phase 5): delegated to the system's speech
+     * recognizer — no audio permission of our own. The top hypothesis
+     * fills the query field and the search runs immediately.
+     */
+    private val voiceLauncher = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            val spoken = result.data
+                ?.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS)
+                ?.firstOrNull()
+                ?.trim()
+                .orEmpty()
+            if (spoken.isNotEmpty()) {
+                input.setText(spoken)
+                input.setSelection(input.length())
+                doSearch()
+            }
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_search)
@@ -36,6 +64,10 @@ class SearchActivity : AppCompatActivity() {
             setOnClickListener { finish() }
         }
         findViewById<TextView>(R.id.searchBtn).setOnClickListener { doSearch() }
+        findViewById<TextView>(R.id.micBtn).apply {
+            styleFocusablePill(this)
+            setOnClickListener { startVoiceSearch() }
+        }
         input.setOnEditorActionListener { _, actionId, _ ->
             if (actionId == EditorInfo.IME_ACTION_SEARCH || actionId == EditorInfo.IME_ACTION_GO) {
                 doSearch(); true
@@ -192,6 +224,41 @@ class SearchActivity : AppCompatActivity() {
         // domain.tld[/path] — a dot with a plausible TLD and no spaces.
         return raw.contains(".") && raw.substringAfterLast(".").length in 2..6 &&
             !raw.startsWith(".")
+    }
+
+    private fun startVoiceSearch() {
+        val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
+            putExtra(
+                RecognizerIntent.EXTRA_LANGUAGE_MODEL,
+                RecognizerIntent.LANGUAGE_MODEL_FREE_FORM
+            )
+            putExtra(RecognizerIntent.EXTRA_LANGUAGE, "id-ID")
+            putExtra(RecognizerIntent.EXTRA_PROMPT, "Bicara sekarang…")
+        }
+        // No recognizer on this TV (or it refuses) → honest message,
+        // the on-screen keyboard stays fully usable.
+        if (intent.resolveActivity(packageManager) == null) {
+            Toast.makeText(
+                this, "Pencarian suara tidak tersedia di TV ini", Toast.LENGTH_SHORT
+            ).show()
+            return
+        }
+        try {
+            voiceLauncher.launch(intent)
+        } catch (e: ActivityNotFoundException) {
+            Toast.makeText(
+                this, "Pencarian suara tidak tersedia di TV ini", Toast.LENGTH_SHORT
+            ).show()
+        }
+    }
+
+    /** Remotes with a dedicated search key trigger voice search too. */
+    override fun dispatchKeyEvent(event: KeyEvent): Boolean {
+        if (event.keyCode == KeyEvent.KEYCODE_SEARCH && event.action == KeyEvent.ACTION_UP) {
+            startVoiceSearch()
+            return true
+        }
+        return super.dispatchKeyEvent(event)
     }
 
     private fun doSearch() {

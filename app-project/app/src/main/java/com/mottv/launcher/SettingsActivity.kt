@@ -1,5 +1,6 @@
 package com.mottv.launcher
 
+import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.provider.Settings
 import android.os.Bundle
@@ -53,6 +54,31 @@ class SettingsActivity : AppCompatActivity() {
                 )
             }
             startActivity(i)
+        }
+        menuItem(R.id.menuUpdate, "Periksa versi terbaru Mot TV Launcher dari GitHub Releases proyek ini, unduh, dan pasang dari sini. Versi kamu sekarang: $appVersion.") {
+            startActivity(Intent(this, UpdateActivity::class.java))
+        }
+        menuItem(R.id.menuDefaultHome, "Pilih Mot TV Launcher sebagai aplikasi Beranda — tombol ini membuka langsung layar \"Aplikasi Beranda\" bawaan sistem, tinggal pilih Mot TV Launcher di sana.") {
+            // Straight to the system's own Home-app chooser — no more
+            // hunting through the TV's settings menus for the stock
+            // launcher entry (the friction that prompted this item).
+            try {
+                startActivity(
+                    Intent(Settings.ACTION_HOME_SETTINGS)
+                        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                )
+            } catch (e: ActivityNotFoundException) {
+                try {
+                    startActivity(Intent(Settings.ACTION_SETTINGS))
+                } catch (e2: Exception) {
+                    Toast.makeText(
+                        this,
+                        "Layar pilihan aplikasi Beranda tidak bisa dibuka dari sini — " +
+                            "atur manual lewat Pengaturan TV → Aplikasi → Aplikasi default → Aplikasi Beranda.",
+                        Toast.LENGTH_LONG
+                    ).show()
+                }
+            }
         }
         menuItem(R.id.menuAndroid, "Buka Pengaturan bawaan Android TV (Wi-Fi, Bluetooth, aplikasi, tentang TV, dan lainnya). Pengaturan sistem ini app terpisah dan selalu bisa dibuka.") {
             try {

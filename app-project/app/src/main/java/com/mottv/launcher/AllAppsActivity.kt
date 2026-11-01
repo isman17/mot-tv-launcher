@@ -172,6 +172,17 @@ class AllAppsActivity : AppCompatActivity() {
                 }
             }
             holder.card.setOnClickListener { launch(item) }
+            // Long-press menu (phase 5): every entry here is a real
+            // installed package (our own package is never listed).
+            AppActions.bind(holder.card, this@AllAppsActivity, item.label, item.packageName) {
+                launch(item)
+            }
         }
+    }
+
+    /** Remote MENU key opens the same long-press app menu (phase 5). */
+    override fun dispatchKeyEvent(event: android.view.KeyEvent): Boolean {
+        if (AppActions.handleMenuKey(this, event)) return true
+        return super.dispatchKeyEvent(event)
     }
 }

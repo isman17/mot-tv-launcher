@@ -60,6 +60,16 @@
                     android:text="Bahasa" />
 
                 <TextView
+                    android:id="@+id/menuUpdate"
+                    style="@style/SettingsMenuItem"
+                    android:text="Cek Pembaruan" />
+
+                <TextView
+                    android:id="@+id/menuDefaultHome"
+                    style="@style/SettingsMenuItem"
+                    android:text="Jadikan Launcher Default" />
+
+                <TextView
                     android:id="@+id/menuAndroid"
                     style="@style/SettingsMenuItem"
                     android:text="Pengaturan TV (Android) ↗"

@@ -16,6 +16,7 @@ import android.view.ViewGroup
 import android.widget.FrameLayout
 import android.widget.ImageView
 import android.widget.LinearLayout
+import android.widget.ScrollView
 import android.widget.TextView
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
@@ -125,6 +126,19 @@ class BolaActivity : AppCompatActivity() {
     private var loadSeq = 0
     private var lastErrorShort: String = ""
 
+    // Auto-refresh (phase 5): while this screen is open on today's date,
+    // re-fetch silently every 60 s so LIVE scores/clocks move without the
+    // user leaving and re-entering. No skeleton, no status noise, scroll
+    // and focus preserved where possible; failures keep the old data.
+    private val refreshHandler = Handler(Looper.getMainLooper())
+    private var autoRefreshing = false
+    private val autoRefreshTick = object : Runnable {
+        override fun run() {
+            if (selectedDate == LocalDate.now()) silentRefreshToday()
+            refreshHandler.postDelayed(this, AUTO_REFRESH_MS)
+        }
+    }
+
     // In-memory cache of REAL fetched data only (per date), this session.
     private val dayCache = HashMap<String, List<LeagueDay>>()
 
@@ -194,6 +208,96 @@ class BolaActivity : AppCompatActivity() {
         fetchLeagueBadges()
         selectDate(LocalDate.now())
         datePills.getValue("today").requestFocus()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        refreshHandler.removeCallbacks(autoRefreshTick)
+        refreshHandler.postDelayed(autoRefreshTick, AUTO_REFRESH_MS)
+    }
+
+    override fun onPause() {
+        super.onPause()
+        refreshHandler.removeCallbacks(autoRefreshTick)
+    }
+
+    override fun onDestroy() {
+        refreshHandler.removeCallbacks(autoRefreshTick)
+        super.onDestroy()
+    }
+
+    /**
+     * Silent re-fetch of today's fixtures through the same hybrid chain
+     * and sequential order as a manual load, but invisible: no skeleton,
+     * no clearing, no error text. A league that fails keeps its previous
+     * matches (transient 429s must not blank a live scoreboard); a total
+     * failure changes nothing on screen. A manual load that started
+     * meanwhile wins (loadSeq snapshot).
+     */
+    private fun silentRefreshToday() {
+        val today = LocalDate.now()
+        if (selectedDate != today || autoRefreshing) return
+        val key = today.format(DateTimeFormatter.ISO_LOCAL_DATE)
+        val previous = dayCache[key]
+        val seqSnapshot = loadSeq
+        autoRefreshing = true
+        loadIo.execute {
+            var failures = 0
+            var badgeUpdated = false
+            val days = ArrayList<LeagueDay>()
+            for ((index, league) in LEAGUES.withIndex()) {
+                if (index > 0) {
+                    try {
+                        Thread.sleep(350)
+                    } catch (e: InterruptedException) {
+                        // keep refreshing the remaining leagues
+                    }
+                }
+                try {
+                    val fetched = fetchLeagueDay(league, key)
+                    if (fetched.leagueBadge != null && league.badgeUrl == null) {
+                        league.badgeUrl = fetched.leagueBadge
+                        badgeUpdated = true
+                    }
+                    days.add(LeagueDay(league, fetched.matches))
+                } catch (e: Exception) {
+                    failures++
+                    val old = previous?.firstOrNull { it.league.id == league.id }
+                    days.add(LeagueDay(league, old?.matches ?: emptyList()))
+                }
+            }
+            handler.post {
+                autoRefreshing = false
+                if (seqSnapshot != loadSeq) return@post // a manual (re)load wins
+                if (selectedDate != today) return@post
+                if (failures == LEAGUES.size) return@post // keep current display
+                if (badgeUpdated) chipsAdapter.notifyDataSetChanged()
+                if (failures == 0) {
+                    writeStoredDay(key, days)
+                    statusText.text = ""
+                }
+                dayCache[key] = days
+                renderPreservingState(days)
+            }
+        }
+    }
+
+    /** render() without yanking the user's scroll position or focus. */
+    private fun renderPreservingState(days: List<LeagueDay>) {
+        val sv = (groupsContainer.parent as? View)?.parent as? ScrollView
+        val scrollY = sv?.scrollY ?: 0
+        var focusIndex = -1
+        for (i in 0 until groupsContainer.childCount) {
+            if (groupsContainer.getChildAt(i).hasFocus()) {
+                focusIndex = i
+                break
+            }
+        }
+        render(days)
+        if (focusIndex >= 0 && focusIndex < groupsContainer.childCount) {
+            groupsContainer.getChildAt(focusIndex).requestFocus()
+        }
+        sv?.post { sv.scrollTo(0, scrollY) }
     }
 
     private fun dp(v: Int): Int = (v * resources.displayMetrics.density).toInt()
@@ -1081,6 +1185,7 @@ class BolaActivity : AppCompatActivity() {
     }
 
     companion object {
+        private const val AUTO_REFRESH_MS = 60_000L
         private const val BOLA_PREFS = "bola_cache"
         private val LABEL_FMT =
             DateTimeFormatter.ofPattern("EEEE, d MMMM yyyy", Locale("id", "ID"))

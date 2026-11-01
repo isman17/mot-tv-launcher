@@ -50,6 +50,9 @@ object Net {
     }
 
     /** True when the failure chain contains a TLS certificate problem. */
+    fun isSslFailurePublic(e: Throwable): Boolean = isSslFailure(e)
+
+    /** True when the failure chain contains a TLS certificate problem. */
     private fun isSslFailure(e: Throwable): Boolean {
         var t: Throwable? = e
         while (t != null) {

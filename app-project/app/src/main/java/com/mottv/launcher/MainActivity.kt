@@ -1,5 +1,6 @@
 package com.mottv.launcher
 
+import android.content.Context
 import android.content.Intent
 import android.graphics.Color
 import android.graphics.Typeface
@@ -19,9 +20,17 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
+import org.json.JSONObject
 import java.text.SimpleDateFormat
+import java.time.LocalDate
+import java.time.LocalDateTime
+import java.time.OffsetDateTime
+import java.time.ZoneId
+import java.time.ZoneOffset
+import java.time.format.DateTimeFormatter
 import java.util.Calendar
 import java.util.Locale
+import java.util.concurrent.Executors
 
 /** Beranda (design frame 1) — also the HOME / LEANBACK_LAUNCHER entry point. */
 class MainActivity : AppCompatActivity() {
@@ -33,6 +42,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var clockPill: TextView
     private lateinit var wifiIcon: WifiIconView
     private lateinit var tileRow: LinearLayout
+    private lateinit var pillBola: TextView
 
     private val clockHandler = Handler(Looper.getMainLooper())
     private val clockTick = object : Runnable {
@@ -57,7 +67,8 @@ class MainActivity : AppCompatActivity() {
 
         findViewById<TextView>(R.id.greeting).text = greeting()
 
-        setupPill(findViewById(R.id.pillBola)) { startActivity(Intent(this, BolaActivity::class.java)) }
+        pillBola = findViewById(R.id.pillBola)
+        setupPill(pillBola) { startActivity(Intent(this, BolaActivity::class.java)) }
         setupPill(findViewById(R.id.pillSholat)) { startActivity(Intent(this, SholatActivity::class.java)) }
         // "Semua App" button — a real button, so it keeps the pill/button
         // styling (unlike the passive Wi-Fi indicator). Since 0.4.1 it
@@ -82,6 +93,7 @@ class MainActivity : AppCompatActivity() {
         )
         clockHandler.removeCallbacks(clockTick)
         clockHandler.post(clockTick)
+        updateBolaPill()
         if (tileRow.childCount > 0 && currentFocus == null) {
             tileRow.getChildAt(0).requestFocus()
         }
@@ -90,6 +102,12 @@ class MainActivity : AppCompatActivity() {
     override fun onPause() {
         super.onPause()
         clockHandler.removeCallbacks(clockTick)
+    }
+
+    /** Remote MENU key opens the same long-press app menu (phase 5). */
+    override fun dispatchKeyEvent(event: android.view.KeyEvent): Boolean {
+        if (AppActions.handleMenuKey(this, event)) return true
+        return super.dispatchKeyEvent(event)
     }
 
     private fun greeting(): String {
@@ -280,6 +298,15 @@ class MainActivity : AppCompatActivity() {
             }
         }
         card.setOnClickListener { onTileClick(tile, resolved) }
+        // Long-press menu (phase 5): only on tiles backed by a real
+        // installed package — the in-app modules (Browser/Games) and
+        // not-installed tiles have no package to act on.
+        val pkg = resolved.installedPackage
+        if (tile.action is TileAction.LaunchApp && pkg != null) {
+            AppActions.bind(card, this, resolved.displayLabel, pkg) {
+                onTileClick(tile, resolved)
+            }
+        }
         return card
     }
 
@@ -339,5 +366,284 @@ class MainActivity : AppCompatActivity() {
                 startActivity(intent)
             }
         }
+    }
+
+    // ---------------- Bola pill: next-match suffix (phase 5) ----------------
+
+    /** One upcoming kickoff candidate for the pill. */
+    private data class NextMatch(
+        val leagueId: String,
+        val home: String,
+        val kickoff: LocalDateTime // WIB wall time, same basis as BolaActivity
+    )
+
+    private val bolaIo = Executors.newSingleThreadExecutor()
+
+    @Volatile
+    private var bolaPillFetching = false
+
+    /**
+     * Shows "⚽ Bola · {Home} {HH:mm}" on the Bola pill when a kickoff is
+     * coming within 24 h, else leaves the plain label. Sources, cheapest
+     * first: BolaActivity's persisted real days (SharedPreferences
+     * "bola_cache", written only from full successful loads) and this
+     * screen's own tiny cache of the last background lookup. Only when
+     * everything is missing or older than 30 minutes do we fetch in the
+     * background — failures are silent and the pill just stays plain.
+     * Priority: a Liga Indonesia match wins over earlier kickoffs in
+     * other leagues; within a group, earliest kickoff wins.
+     */
+    private fun updateBolaPill() {
+        val nowWib = LocalDateTime.now(WIB_ZONE)
+        val windowEnd = nowWib.plusHours(24)
+        val (stored, storedFetchedAt) = readStoredNextMatches(nowWib, windowEnd)
+        val (own, ownFetchedAt) = readOwnNextMatch(nowWib, windowEnd)
+        val pick = pickNext(stored + listOfNotNull(own))
+        pillBola.text = if (pick != null) {
+            "⚽ Bola · ${shortTeam(pick.home)} ${pick.kickoff.format(HHMM_FMT)}"
+        } else {
+            PLAIN_BOLA_LABEL
+        }
+        val freshest = maxOf(storedFetchedAt, ownFetchedAt)
+        val stale = freshest == 0L ||
+            System.currentTimeMillis() - freshest > STALE_MS
+        if (stale) fetchBolaNextInBackground()
+    }
+
+    private fun pickNext(candidates: List<NextMatch>): NextMatch? {
+        if (candidates.isEmpty()) return null
+        val idn = candidates.filter { it.leagueId == BolaActivity.IDN_LEAGUE_ID }
+        return (idn.ifEmpty { candidates }).minByOrNull { it.kickoff }
+    }
+
+    /** Team name compressed to ≤10 chars for the pill: first word when
+     *  that reads well ("Persib Bandung" → "Persib"), else hard cut. */
+    private fun shortTeam(name: String): String {
+        if (name.length <= 10) return name
+        val first = name.substringBefore(' ')
+        return if (first.length in 3..10) first else name.take(10).trim()
+    }
+
+    /** Candidates from BolaActivity's persisted days (today + tomorrow). */
+    private fun readStoredNextMatches(
+        nowWib: LocalDateTime,
+        windowEnd: LocalDateTime
+    ): Pair<List<NextMatch>, Long> {
+        val out = ArrayList<NextMatch>()
+        var freshest = 0L
+        try {
+            val prefs = getSharedPreferences(BOLA_CACHE_PREFS, Context.MODE_PRIVATE)
+            for (offset in 0..1) {
+                val date = nowWib.toLocalDate().plusDays(offset.toLong())
+                val raw = prefs.getString(
+                    "day_${date.format(DateTimeFormatter.ISO_LOCAL_DATE)}", null
+                ) ?: continue
+                val root = JSONObject(raw)
+                freshest = maxOf(freshest, root.optLong("fetchedAt", 0L))
+                val leagues = root.optJSONArray("leagues") ?: continue
+                for (i in 0 until leagues.length()) {
+                    val lo = leagues.optJSONObject(i) ?: continue
+                    val leagueId = lo.optString("leagueId")
+                    val matches = lo.optJSONArray("matches") ?: continue
+                    for (j in 0 until matches.length()) {
+                        val m = matches.optJSONObject(j) ?: continue
+                        if (m.optString("status", "NS") != "NS") continue
+                        if (m.optBoolean("postponed", false)) continue
+                        if (m.isNull("kickoff")) continue
+                        val kickoff = try {
+                            LocalDateTime.parse(m.optString("kickoff"))
+                        } catch (e: Exception) {
+                            null
+                        } ?: continue
+                        if (!kickoff.isAfter(nowWib) || !kickoff.isBefore(windowEnd)) continue
+                        val home = m.optString("home")
+                        if (home.isBlank()) continue
+                        out.add(NextMatch(leagueId, home, kickoff))
+                    }
+                }
+            }
+        } catch (e: Exception) {
+            // Corrupt/absent cache → no candidates; background fetch decides.
+        }
+        return out to freshest
+    }
+
+    /** This screen's own last background-lookup result, if still usable. */
+    private fun readOwnNextMatch(
+        nowWib: LocalDateTime,
+        windowEnd: LocalDateTime
+    ): Pair<NextMatch?, Long> {
+        val prefs = getSharedPreferences(HOME_BOLA_PREFS, Context.MODE_PRIVATE)
+        val fetchedAt = prefs.getLong("fetched_at", 0L)
+        val kickoffIso = prefs.getString("kickoff", null) ?: return null to fetchedAt
+        val kickoff = try {
+            LocalDateTime.parse(kickoffIso)
+        } catch (e: Exception) {
+            return null to fetchedAt
+        }
+        if (!kickoff.isAfter(nowWib) || !kickoff.isBefore(windowEnd)) return null to fetchedAt
+        val home = prefs.getString("home", null)?.ifBlank { null } ?: return null to fetchedAt
+        val leagueId = prefs.getString("league_id", "") ?: ""
+        return NextMatch(leagueId, home, kickoff) to fetchedAt
+    }
+
+    /**
+     * Background lookup over the same hybrid sources BolaActivity uses
+     * (Liga Indonesia via TheSportsDB, the big five via keyless ESPN,
+     * each with the other as fallback), today first — if an Indonesian
+     * match turns up we stop there, since it outranks everything else.
+     * Only the single best pick is kept (in HOME_BOLA_PREFS, deliberately
+     * NOT in BolaActivity's day cache, whose full-day format this light
+     * lookup doesn't reproduce). Every failure is silent.
+     */
+    private fun fetchBolaNextInBackground() {
+        if (bolaPillFetching) return
+        bolaPillFetching = true
+        bolaIo.execute {
+            try {
+                val nowWib = LocalDateTime.now(WIB_ZONE)
+                val windowEnd = nowWib.plusHours(24)
+                val candidates = ArrayList<NextMatch>()
+                for (offset in 0..1) {
+                    val date = nowWib.toLocalDate().plusDays(offset.toLong())
+                    for (league in BolaActivity.LEAGUES) {
+                        try {
+                            candidates += fetchLeagueNext(league, date)
+                        } catch (e: Exception) {
+                            // silent by design
+                        }
+                    }
+                    if (candidates.any { it.leagueId == BolaActivity.IDN_LEAGUE_ID }) break
+                }
+                val pick = pickNext(
+                    candidates.filter {
+                        it.kickoff.isAfter(nowWib) && it.kickoff.isBefore(windowEnd)
+                    }
+                )
+                getSharedPreferences(HOME_BOLA_PREFS, Context.MODE_PRIVATE).edit().apply {
+                    putLong("fetched_at", System.currentTimeMillis())
+                    if (pick != null) {
+                        putString("league_id", pick.leagueId)
+                        putString("home", pick.home)
+                        putString("kickoff", pick.kickoff.toString())
+                    } else {
+                        remove("league_id")
+                        remove("home")
+                        remove("kickoff")
+                    }
+                    apply()
+                }
+                clockHandler.post { updateBolaPill() }
+            } catch (e: Exception) {
+                // silent by design — pill keeps the plain label
+            } finally {
+                bolaPillFetching = false
+            }
+        }
+    }
+
+    /** One league-day through the hybrid chain; errors propagate to the
+     *  caller, which treats them silently. Fallback only on error. */
+    private fun fetchLeagueNext(league: BolaActivity.League, date: LocalDate): List<NextMatch> {
+        val sources: List<() -> List<NextMatch>> =
+            if (league.id == BolaActivity.IDN_LEAGUE_ID) {
+                listOf({ fetchTsdbNext(league, date) }, { fetchEspnNext(league, date) })
+            } else {
+                listOf({ fetchEspnNext(league, date) }, { fetchTsdbNext(league, date) })
+            }
+        var last: Exception? = null
+        for (source in sources) {
+            try {
+                return source()
+            } catch (e: Exception) {
+                last = e
+            }
+        }
+        throw last ?: IllegalStateException("no source answered")
+    }
+
+    private fun fetchEspnNext(league: BolaActivity.League, date: LocalDate): List<NextMatch> {
+        val ymd = date.format(DateTimeFormatter.BASIC_ISO_DATE)
+        val json = Net.getJson(
+            "https://site.api.espn.com/apis/site/v2/sports/soccer/${league.espnSlug}" +
+                "/scoreboard?dates=$ymd"
+        )
+        val out = ArrayList<NextMatch>()
+        val events = json.optJSONArray("events") ?: return out
+        for (i in 0 until events.length()) {
+            val e = events.optJSONObject(i) ?: continue
+            val type = e.optJSONObject("status")?.optJSONObject("type") ?: continue
+            if (type.optString("state") != "pre") continue
+            if (type.optString("name") == "STATUS_POSTPONED") continue
+            val kickoff = parseUtcToWib(e.optString("date")) ?: continue
+            val competitors = e.optJSONArray("competitions")
+                ?.optJSONObject(0)?.optJSONArray("competitors") ?: continue
+            var homeName: String? = null
+            for (j in 0 until competitors.length()) {
+                val c = competitors.optJSONObject(j) ?: continue
+                if (c.optString("homeAway") == "home") {
+                    homeName = c.optJSONObject("team")?.optString("displayName")
+                    break
+                }
+            }
+            val name = homeName?.ifBlank { null } ?: continue
+            out.add(NextMatch(league.id, name, kickoff))
+        }
+        return out
+    }
+
+    private fun fetchTsdbNext(league: BolaActivity.League, date: LocalDate): List<NextMatch> {
+        val key = date.format(DateTimeFormatter.ISO_LOCAL_DATE)
+        val json = Net.getJson(
+            "https://www.thesportsdb.com/api/v1/json/123/eventsday.php" +
+                "?d=$key&s=Soccer&l=${league.id}"
+        )
+        if (json.isNull("events")) return emptyList()
+        val events = json.optJSONArray("events") ?: return emptyList()
+        val out = ArrayList<NextMatch>()
+        for (i in 0 until events.length()) {
+            val e = events.optJSONObject(i) ?: continue
+            if (e.optString("strPostponed") == "yes") continue
+            val status = e.optString("strStatus")
+            if (status.isNotBlank() && status !in TSDB_UPCOMING) continue
+            val kickoff = parseUtcToWib(e.optString("strTimestamp")) ?: continue
+            val home = e.optString("strHomeTeam")
+            if (home.isBlank()) continue
+            out.add(NextMatch(league.id, home, kickoff))
+        }
+        return out
+    }
+
+    /** UTC ISO timestamp ("2026-11-01T16:30Z" or "2026-11-01 16:30:00")
+     *  → WIB wall time, mirroring BolaActivity's conversions. */
+    private fun parseUtcToWib(raw: String?): LocalDateTime? {
+        if (raw.isNullOrBlank()) return null
+        val iso = raw.trim().replace(" ", "T")
+        return try {
+            OffsetDateTime.parse(iso)
+                .atZoneSameInstant(WIB_ZONE)
+                .toLocalDateTime()
+        } catch (e: Exception) {
+            try {
+                LocalDateTime.parse(iso.removeSuffix("Z"))
+                    .atZone(ZoneOffset.UTC)
+                    .withZoneSameInstant(WIB_ZONE)
+                    .toLocalDateTime()
+            } catch (e2: Exception) {
+                null
+            }
+        }
+    }
+
+    companion object {
+        // The pill's resting label, exactly as laid out in activity_main.xml.
+        private const val PLAIN_BOLA_LABEL = "Jadwal Bola"
+        // Storage contract shared with BolaActivity (its "bola_cache" file).
+        private const val BOLA_CACHE_PREFS = "bola_cache"
+        private const val HOME_BOLA_PREFS = "home_bola"
+        private const val STALE_MS = 30 * 60 * 1000L
+        private val WIB_ZONE: ZoneId = ZoneId.of("Asia/Jakarta")
+        private val HHMM_FMT: DateTimeFormatter = DateTimeFormatter.ofPattern("HH:mm")
+        private val TSDB_UPCOMING = setOf("NS", "Not Started")
     }
 }

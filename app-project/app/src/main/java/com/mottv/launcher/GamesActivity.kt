@@ -144,7 +144,7 @@ class GamesActivity : AppCompatActivity() {
                     v.animate().scaleX(1f).scaleY(1f).setDuration(120).start()
                 }
             }
-            holder.card.setOnClickListener {
+            val openAction: () -> Unit = {
                 if (item.isStoreTile) {
                     val intent = AppResolver.launchIntent(this@GamesActivity, "com.android.vending")
                     if (intent != null) startActivity(intent)
@@ -155,6 +155,26 @@ class GamesActivity : AppCompatActivity() {
                     else Toast.makeText(this@GamesActivity, "${item.label} tidak bisa dibuka", Toast.LENGTH_SHORT).show()
                 }
             }
+            holder.card.setOnClickListener { openAction() }
+            // Long-press menu (phase 5). The store tile acts on the Play
+            // Store package (info only — uninstall stays hidden for it).
+            when {
+                item.isStoreTile -> AppActions.bind(
+                    holder.card, this@GamesActivity, item.label,
+                    "com.android.vending", openAction
+                )
+                item.packageName != null -> AppActions.bind(
+                    holder.card, this@GamesActivity, item.label,
+                    item.packageName, openAction
+                )
+                else -> AppActions.unbind(holder.card)
+            }
         }
+    }
+
+    /** Remote MENU key opens the same long-press app menu (phase 5). */
+    override fun dispatchKeyEvent(event: android.view.KeyEvent): Boolean {
+        if (AppActions.handleMenuKey(this, event)) return true
+        return super.dispatchKeyEvent(event)
     }
 }

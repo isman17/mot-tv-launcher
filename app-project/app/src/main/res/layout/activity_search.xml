@@ -115,17 +115,20 @@
                 android:textStyle="bold" />
 
             <TextView
+                android:id="@+id/micBtn"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="10dp"
                 android:background="@drawable/pill_bg"
-                android:paddingStart="14dp"
-                android:paddingTop="9dp"
-                android:paddingEnd="14dp"
-                android:paddingBottom="9dp"
-                android:text="Mic — tahan tombol suara di remote"
-                android:textColor="#CCFFFFFF"
-                android:textSize="13sp" />
+                android:clickable="true"
+                android:focusable="true"
+                android:paddingStart="16dp"
+                android:paddingTop="13dp"
+                android:paddingEnd="16dp"
+                android:paddingBottom="13dp"
+                android:text="🎤 Suara"
+                android:textColor="#FFFFFF"
+                android:textSize="15sp" />
         </LinearLayout>
 
         <LinearLayout

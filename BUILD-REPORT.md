@@ -387,3 +387,79 @@ Pemakaian per layar:
 1. Semua perubahan **compile-verified**; belum ada verifikasi runtime/emulator. Khususnya: panel SSL baru bisa dibuktikan hanya saat ada situs yang sertifikatnya gagal di TV; kualitas "nge-blend" blur dan rasa shimmer dinilai user di TV.
 2. Persetujuan "Tetap Buka" bersifat per-sesi proses app — app di-force-stop / TV restart akan bertanya lagi. Itu disengaja (persetujuan permanen untuk sertifikat rusak tidak aman).
 3. Shimmer memakai satu animator ValueAnimator di main thread dengan invalidate per bar — jumlah bar per layar kecil (±40 terburuk di Bola), jauh di bawah beban animasi UI biasa di TV ini.
+
+
+---
+
+# BUILD REPORT — Fase 5 (4 fitur persetujuan user: update mandiri, menu long-press, voice search, Bola live) — v0.5.0
+
+Tanggal: 2026-11-01 · Status akhir: **BUILD SUCCESSFUL — APK 0.5.0 jadi, badging + sertifikat + quotes terverifikasi.**
+Konteks: user menyetujui 4 usulan perbaikan (dari daftar "tanpa mengubah looks major") pada 2026-11-01: (1) Cek Pembaruan dari GitHub Releases sendiri, (2) menu long-press di tile, (3) pencarian suara, (4) sentuhan live Jadwal Bola. Di tengah fase ditambah **item 5** atas permintaan user yang kesusahan mencari launcher bawaan di menu-menu TV: tombol "Jadikan Launcher Default" di Pengaturan (lihat sub-bab Item 5 di akhir seksi ini). APK 0.5.0 di-build ulang sekali untuk item 5 — versi & sertifikat tidak berubah, jadi tetap menimpa bersih. **Tidak ada perubahan layout mayor** — semua halaman yang sama, bahasa visual yang sama; yang berubah: satu item menu baru di Pengaturan, satu layar update baru bergaya sama, label mic di Pencarian jadi tombol beneran, dan teks pill Bola bisa memanjang sesekali. Status di bawah tetap jujur: semua *compile-verified dari VM*; perilaku runtime di TV menunggu instal 0.5.0 oleh user (tidak ada percobaan ADB dari VM). **Tidak ada commit/push git di fase ini** — urusan GitHub dipegang parent.
+
+## Hasil akhir
+
+| Item | Nilai |
+|---|---|
+| APK (deliverable) | `~/workspace/smart-tv-launcher/MotTvLauncher-0.5.0-debug.apk` |
+| Ukuran | 9.720.269 byte (±9,7 MB — angka dari rebuild final fase ini setelah item 5 masuk; **tidak ada dependensi pihak ketiga baru**) |
+| applicationId | `com.mottv.launcher` |
+| versionName / versionCode | **0.5.0 / 8** (dari `aapt dump badging`) |
+| minSdk / targetSdk / compileSdk | 26 / 34 / 34 (badging) |
+| Izin baru di badging | `REQUEST_INSTALL_PACKAGES` (update mandiri) |
+| Komponen baru terverifikasi di manifest APK | provider `androidx.core.content.FileProvider` (authority `com.mottv.launcher.fileprovider`), activity `UpdateActivity` |
+| Sertifikat penanda tangan | SHA-256 **dda6fa9827737d4b447a3caa470fbec0838d534679f4579a0195ae116fe096d4** — identik keystore permanen → **0.5.0 bisa diinstal menimpa 0.4.3 TANPA uninstall** |
+| Sanity | `assets/quotes.json` md5 identik dengan `quotes/quotes.json` (**1600905b7551b553a97dd09fc0020849**) — pool tidak berubah |
+
+Perintah build: pola offline persis fase 1–4.3 (`assembleDebug --offline --no-daemon`). Satu-satunya insiden: pola `continue` di dalam lambda inline (`ifBlank { continue }`) ditolak compiler ("break continue in inline lambdas is experimental") → ditulis ulang eksplisit, lalu build hijau.
+
+## Item 1 — Cek Pembaruan (update mandiri dari GitHub Releases sendiri)
+
+- **Menu baru di Pengaturan**: "Cek Pembaruan" (di antara Bahasa dan Pengaturan TV), hint-nya menyebut versi terinstal saat ini (dibaca runtime dari PackageManager, bukan string basi). Membuka layar baru **`UpdateActivity`** — layout sendiri tapi bahasa visual yang sama persis (background + judul besar + teks status center + tombol pill emas).
+- **Pemeriksaan**: GET `https://api.github.com/repos/isman17/mot-tv-launcher/releases/latest` via helper `Net` yang ada (browser UA). `tag_name` (leading "v" dibuang) dibandingkan per-segmen numerik dengan versionName terinstal:
+  - Tidak lebih baru → "Sudah versi terbaru" + info tag terakhir.
+  - Lebih baru tapi rilis **tidak memuat aset .apk** → dinyatakan apa adanya, tidak ada tombol pasang palsu.
+  - Lebih baru + ada .apk → kartu **cuplikan release notes** (maks ±600 karakter, maxLines 8) + tombol **[Unduh & Pasang]**.
+- **Degradasi jujur (penting)**: repo ini (saat fase dikerjakan) berstatus **PRIVATE** → API Releases anonim menjawab 404 (GitHub menyamarkan repo privat sebagai "not found"). Setiap kegagalan (404/error/jaringan/SSL) menampilkan persis sikap yang dirancang: **"Belum bisa memeriksa pembaruan (repo privat / tidak ada koneksi). Versi kamu: X."** + kode alasan singkat dalam kurung siku — tidak pernah crash, tidak pernah pura-pura ada/tidak ada update. Begitu repo dibuat publik, fitur ini langsung bekerja **tanpa perubahan app** (endpoint & parsing yang sama). *(Catatan: selama fase ini berjalan user mengubah repo jadi PUBLIC dan parent memverifikasi API-nya menjawab 200 dari VM — jadi jalur suksesnya sekarang terbuka; verifikasi di TV tetap menunggu retest user seperti biasa.)*
+- **Unduh**: aset .apk (aset pertama yang namanya berakhiran `.apk`) di-stream ke `cacheDir/updates/` via HttpURLConnection (UA browser, redirect diikuti, timeout 15s/30s), progres tampil sebagai **persen** bila server mengirim panjang konten, atau ukuran terunduh bila tidak. Kegagalan unduh → pesan + alasan, tombol kembali ke "Unduh & Pasang". SSL failure diterjemahkan ke `SslValidationException` bahasa polos yang sama seperti fase 4.3.
+- **Pasang**: URI dari **FileProvider** (`androidx.core.content.FileProvider` — terverifikasi ada di dalam `androidx.core` 1.13.1 yang sudah ditarik core-ktx; `classes.jar`-nya diperiksa langsung di maven-local sebelum coding, jadi fitur ini TIDAK ter-block) + intent `ACTION_VIEW` type `application/vnd.android.package-archive` + `FLAG_GRANT_READ_URI_PERMISSION` + `FLAG_ACTIVITY_NEW_TASK`. `res/xml/file_paths.xml` hanya membuka `cache-path updates/` — tidak ada path lain yang dishare. Manifest menambah izin `REQUEST_INSTALL_PACKAGES`.
+- **Izin instal belum diberikan**: sebelum installer dibuka, app memeriksa `packageManager.canRequestPackageInstalls()`. Kalau belum → state "Beri Izin Instal": teks menjelaskan kenapa, tombol membuka `Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES` untuk paket app ini persis; sepulang dari sana (onResume) state otomatis jadi **"Pasang Sekarang"** bila izin sudah diberikan dan file unduhan masih ada. Kalau halaman izinnya pun tidak bisa dibuka → toast berisi jalur manual lengkapnya. Unduhan yang selesai dan izin sudah ada → installer langsung dibuka + tombol jadi "Pasang Sekarang" buat coba lagi.
+
+## Item 2 — Menu long-press di tile (Buka / Info / Copot)
+
+- Helper bersama **`AppActions`**: `bind(view, activity, label, packageName, open)` memasang `setOnLongClickListener` (return true — klik normal tidak ikut terpicu) dan menyimpan spec menu di tag view (`R.id.app_menu_action`, ids.xml baru); `unbind` untuk keamanan rebind RecyclerView.
+- **Dialog**: `AlertDialog` bawaan AppCompat (fokus D-pad natural), judul = nama app asli, item:
+  - **Buka** — menjalankan aksi klik normal tile itu persis.
+  - **Info Aplikasi** — `Settings.ACTION_APPLICATION_DETAILS_SETTINGS` untuk paketnya.
+  - **Copot Pemasangan** — `Intent.ACTION_DELETE` `package:` (sistem yang memutuskan — app sistem akan ditawari disable oleh sistem sendiri). Item ini **disembunyikan** untuk paket sendiri (`com.mottv.launcher`) dan Play Store (`com.android.vending`).
+- **Cakupan**: tile Beranda yang berbasis paket nyata & terinstal (tile Browser/Games adalah modul in-app tanpa paket, tile belum-terinstal tidak punya apa-apa buat diapa-apakan — keduanya sengaja tidak diberi menu), semua kartu grid Games (tile Play Store di Games di-bind ke paket vending → dapat Buka + Info, tanpa Copot), dan semua kartu grid Semua App (paket sendiri memang tidak pernah terdaftar di sana).
+- **Tombol MENU remote**: ketiga activity meneruskan `dispatchKeyEvent` ke `AppActions.handleMenuKey` — KEYCODE_MENU (ACTION_UP) pada view berfokus (atau induknya) yang punya menu ter-bind akan membuka dialog yang sama.
+
+## Item 3 — Pencarian suara di Pencarian
+
+- Label statis lama "Mic — tahan tombol suara di remote" di header Pencarian diganti **tombol fokusable "🎤 Suara"** di posisi & gaya pill yang sama (di samping tombol Cari).
+- Tap → `Intent(ACTION_RECOGNIZE_SPEECH)` dengan `EXTRA_LANGUAGE_MODEL=FREE_FORM`, `EXTRA_LANGUAGE="id-ID"`, prompt "Bicara sekarang…", lewat activity-result launcher. Hasil `RESULT_OK`: hipotesis teratas masuk ke kolom query dan **pencarian langsung dijalankan** (jalur `doSearch()` yang sama — URL tetap dibuka di browser, kata tetap ke Hasil).
+- **Jujur saat tidak tersedia**: `resolveActivity` null atau `ActivityNotFoundException` → toast **"Pencarian suara tidak tersedia di TV ini"**; keyboard on-screen tidak terganggu. Tidak ada izin baru (intent terdelegasi ke recognizer sistem). Tombol **KEYCODE_SEARCH** di remote, saat di layar ini, memicu hal yang sama.
+
+## Item 4 — Bola live: auto-refresh + pill pertandingan berikutnya
+
+- **Auto-refresh 60 detik** (`BolaActivity`): timer Handler berjalan hanya saat activity di-resume (dihentikan di onPause/onDestroy). Tick hanya bekerja bila tanggal terpilih adalah **hari ini**. Refresh-nya **diam-diam**: rantai hybrid & urutan sekuensial yang sama seperti muat manual, tapi tanpa skeleton, tanpa membersihkan layar, tanpa teks error. Kegagalan **per-liga mempertahankan data lama liga itu** (429 sesaat tidak boleh mengosongkan skor live yang sedang tampil); kegagalan total tidak mengubah apa pun di layar. Keberhasilan penuh menulis cache persisten seperti muat manual. Muat manual yang mulai di tengah jalan menang (snapshot `loadSeq`). Render ulang **mempertahankan posisi scroll** (ScrollView di-restore setelah render) dan **fokus** (anak `groupsContainer` pada indeks yang sama di-fokus ulang bila sebelumnya ada yang fokus) sebisa mungkin.
+- **Pill Bola di Beranda**: pada `onResume`, pill bisa menjadi **"⚽ Bola · {Home} {HH:mm}"** bila ada kickoff dalam 24 jam ke depan (basis waktu WIB, konsisten dengan halaman Bola); tanpa kandidat pill tetap label polosnya persis seperti sekarang ("Jadwal Bola" — label diam tidak diubah sama sekali). Nama tim dipadatkan ≤10 karakter (kata pertama bila enak dibaca: "Persib Bandung" → "Persib"; selain itu potong 10). Sumber berurutan dari yang termurah:
+  1. **Cache hari persisten milik BolaActivity** (SharedPreferences `bola_cache`, hari ini + besok) — data asli yang memang sudah pernah dimuat user; hanya match berstatus `NS`, tidak ditunda, kickoff di jendela (sekarang, +24 jam).
+  2. **Cache kecil milik Beranda sendiri** (`home_bola`: pick terakhir + waktu fetch).
+  3. Bila semua kosong atau **lebih tua dari 30 menit** → **fetch background** ringan memakai rantai hybrid yang sama (Liga Indonesia via TheSportsDB, lima liga besar via ESPN keyless, saling fallback saat error), hari ini dulu — ketemu match Indonesia langsung berhenti (ia memang prioritas). Hasilnya (satu pick terbaik saja) disimpan di cache Beranda sendiri — **sengaja tidak** ditulis ke cache hari BolaActivity karena format hari penuhnya tidak direproduksi lookup ringan ini. Semua kegagalan senyap → pill tetap polos.
+  - **Prioritas pick**: match Liga Indonesia (4790) mengalahkan kickoff lebih awal dari liga lain; di dalam kelompok yang sama, kickoff paling awal yang menang.
+
+## Keterbatasan fase 5 (jujur)
+
+1. Semua perubahan **compile-verified + isi APK terverifikasi dari VM**; belum ada verifikasi runtime/emulator (tidak ada perangkat/ADB dari VM, sama seperti fase sebelumnya). Yang menunggu retest user di TV: dialog long-press & tombol MENU, recognizer suara bawaan TV/remote, auto-refresh yang benar-benar menggerakkan skor live, pill yang terisi dari jadwal asli, dan seluruh alur update (cek → unduh → izin → installer) ujung ke ujung.
+2. Alur Cek Pembaruan jalur suksesnya bergantung repo publik — user mengubah repo jadi PUBLIC di tengah fase ini (parent memverifikasi API 200 dari VM); bila repo dibuat privat lagi, app kembali ke pesan degradasi jujur di atas, bukan error.
+3. Pemeriksaan update hanya memeriksa rilis **terbaru** (`/releases/latest`) dan memilih aset `.apk` pertama di rilis itu — sesuai struktur rilis proyek ini (satu APK per rilis).
+4. Auto-refresh mempertahankan data lama untuk liga yang gagal, jadi skor bisa tertinggal satu siklus (60 dtk) saat sumbernya batuk — ditampilkan apa adanya tanpa label khusus, konsisten dengan sikap cache fase 3–4.
+5. Pill Beranda memakai cache hari Bola hanya bila user pernah membuka Jadwal Bola untuk tanggal itu; sebelum itu ia bergantung pada lookup background Beranda sendiri yang berjalan paling sering sekali per 30 menit dan bisa saja tidak menemukan apa-apa pada hari tanpa pertandingan — pill polos pada hari kosong adalah jawaban jujur, bukan error.
+
+## Item 5 (tambahan di tengah fase 5) — tombol "Jadikan Launcher Default"
+
+- **Penempatan**: item menu baru di Pengaturan, persis **di bawah "Cek Pembaruan"** (dekat bagian atas daftar), gaya `SettingsMenuItem` yang sama persis — tidak ada elemen visual baru. Label: **"Jadikan Launcher Default"**; teks penjelas di panel kanan: *"Pilih Mot TV Launcher sebagai aplikasi Beranda — tombol ini membuka langsung layar "Aplikasi Beranda" bawaan sistem, tinggal pilih Mot TV Launcher di sana."*
+- **Perilaku**: tap → `Intent(Settings.ACTION_HOME_SETTINGS)` + `FLAG_ACTIVITY_NEW_TASK` — layar pilihan **Home app bawaan sistem** terbuka langsung, user tinggal memilih Mot TV Launcher di sana. Ini menghilangkan friksi yang memicu item ini: user tidak perlu lagi berburu entri launcher bawaan di dalam menu Pengaturan TV yang berlapis-lapis.
+- **Fallback jujur berjenjang**: `ActivityNotFoundException` dari intent utama → jatuh ke `Intent(Settings.ACTION_SETTINGS)` (Pengaturan sistem umum); kalau itu pun gagal → toast panjang berisi jalur manual lengkapnya (Pengaturan TV → Aplikasi → Aplikasi default → Aplikasi Beranda). Tidak ada perilaku lain yang diubah; app tidak menyentuh status default apa pun sendiri — keputusan tetap dibuat user di layar sistem.
+- **Verifikasi rebuild**: BUILD SUCCESSFUL; badging tetap **0.5.0 / vc8 / minSdk 26**; sertifikat tetap **dda6fa98…** (menimpa 0.4.3 — dan build 0.5.0 sebelumnya — tanpa uninstall); md5 `quotes.json` tetap **1600905b…**. Ukuran APK final 9.720.269 byte (tabel Hasil akhir di atas sudah memakai angka rebuild ini). Perilaku runtime (layar Home-settings di TCL user benar-benar terdaftar & terbuka) tetap menunggu retest user di TV, seperti item fase 5 lainnya.
